@@ -3,20 +3,35 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BaraGo API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: residents
+    description: Resident management
+  - name: appointments
+    description: Appointment operations
+  - name: ambulance
+    description: Ambulance request operations
+  - name: schedules
+    description: Health schedule operations
+  - name: notifications
+    description: Notification operations
+  - name: reports
+    description: Report operations
+  - name: dashboard
+    description: Dashboard summary operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +39,654 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Auth
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new resident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithResident"
+        "401":
+          description: Not authenticated
+
+  # Residents
+  /residents:
+    get:
+      operationId: listResidents
+      tags: [residents]
+      summary: List all residents (admin only)
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: verified
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of residents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResidentWithUser"
+
+  /residents/{id}:
+    get:
+      operationId: getResident
+      tags: [residents]
+      summary: Get a resident by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resident
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentWithUser"
+        "404":
+          description: Not found
+
+    patch:
+      operationId: updateResident
+      tags: [residents]
+      summary: Update resident details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResidentUpdate"
+      responses:
+        "200":
+          description: Updated resident
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentWithUser"
+
+  /residents/{id}/verify:
+    patch:
+      operationId: verifyResident
+      tags: [residents]
+      summary: Verify or unverify a resident (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentWithUser"
+
+  /residents/{id}/disable:
+    patch:
+      operationId: disableResident
+      tags: [residents]
+      summary: Disable or enable a resident account (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisableInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentWithUser"
+
+  # Appointments
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List appointments
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: residentId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppointmentWithResident"
+
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Book an appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentWithResident"
+
+  /appointments/{id}:
+    get:
+      operationId: getAppointment
+      tags: [appointments]
+      summary: Get appointment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentWithResident"
+        "404":
+          description: Not found
+
+    patch:
+      operationId: updateAppointment
+      tags: [appointments]
+      summary: Update appointment status (admin/health worker)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentWithResident"
+
+    delete:
+      operationId: cancelAppointment
+      tags: [appointments]
+      summary: Cancel appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancelled
+
+  # Ambulance Requests
+  /ambulance:
+    get:
+      operationId: listAmbulanceRequests
+      tags: [ambulance]
+      summary: List ambulance requests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: residentId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of ambulance requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AmbulanceRequestWithResident"
+
+    post:
+      operationId: createAmbulanceRequest
+      tags: [ambulance]
+      summary: Submit an ambulance request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AmbulanceInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmbulanceRequestWithResident"
+
+  /ambulance/{id}:
+    get:
+      operationId: getAmbulanceRequest
+      tags: [ambulance]
+      summary: Get ambulance request by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ambulance request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmbulanceRequestWithResident"
+        "404":
+          description: Not found
+
+    patch:
+      operationId: updateAmbulanceRequest
+      tags: [ambulance]
+      summary: Update ambulance request status (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AmbulanceUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AmbulanceRequestWithResident"
+
+    delete:
+      operationId: cancelAmbulanceRequest
+      tags: [ambulance]
+      summary: Cancel ambulance request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancelled
+
+  # Health Schedules
+  /schedules:
+    get:
+      operationId: listSchedules
+      tags: [schedules]
+      summary: List health schedules
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HealthSchedule"
+
+    post:
+      operationId: createSchedule
+      tags: [schedules]
+      summary: Create a health schedule (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSchedule"
+
+  /schedules/{id}:
+    get:
+      operationId: getSchedule
+      tags: [schedules]
+      summary: Get health schedule by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Schedule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSchedule"
+
+    patch:
+      operationId: updateSchedule
+      tags: [schedules]
+      summary: Update a schedule (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSchedule"
+
+    delete:
+      operationId: deleteSchedule
+      tags: [schedules]
+      summary: Delete a schedule (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  # Notifications
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Get notifications for current user
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+    post:
+      operationId: createNotification
+      tags: [notifications]
+      summary: Send a notification (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: Updated
+
+  # Dashboard
+  /dashboard/admin:
+    get:
+      operationId: getAdminDashboard
+      tags: [dashboard]
+      summary: Get admin dashboard summary
+      responses:
+        "200":
+          description: Admin dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /dashboard/resident:
+    get:
+      operationId: getResidentDashboard
+      tags: [dashboard]
+      summary: Get resident dashboard summary
+      responses:
+        "200":
+          description: Resident dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResidentDashboard"
+
+  # Reports
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: List generated reports (admin only)
+      responses:
+        "200":
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+
+    post:
+      operationId: generateReport
+      tags: [reports]
+      summary: Generate a report (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportInput"
+      responses:
+        "201":
+          description: Generated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get report by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+    delete:
+      operationId: deleteReport
+      tags: [reports]
+      summary: Delete a report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +697,563 @@ components:
       required:
         - status
 
+    # Auth
+    RegisterInput:
+      type: object
+      required: [fullName, email, password, address, contactNumber, birthdate, gender, purok]
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        birthdate:
+          type: string
+        age:
+          type: ["integer", "null"]
+        gender:
+          type: string
+        address:
+          type: string
+        purok:
+          type: string
+        contactNumber:
+          type: string
+        emergencyContactName:
+          type: ["string", "null"]
+        emergencyContactNumber:
+          type: ["string", "null"]
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/UserWithResident"
+
+    User:
+      type: object
+      required: [id, fullName, email, role, status, createdAt]
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [resident, admin, health_worker]
+        status:
+          type: string
+          enum: [active, disabled]
+        createdAt:
+          type: string
+
+    UserWithResident:
+      type: object
+      required: [id, fullName, email, role, status, createdAt]
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [resident, admin, health_worker]
+        status:
+          type: string
+          enum: [active, disabled]
+        createdAt:
+          type: string
+        resident:
+          $ref: "#/components/schemas/Resident"
+
+    # Residents
+    Resident:
+      type: object
+      required: [id, userId, address, contactNumber, verified, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        birthdate:
+          type: ["string", "null"]
+        age:
+          type: ["integer", "null"]
+        gender:
+          type: ["string", "null"]
+        address:
+          type: string
+        purok:
+          type: ["string", "null"]
+        contactNumber:
+          type: string
+        emergencyContactName:
+          type: ["string", "null"]
+        emergencyContactNumber:
+          type: ["string", "null"]
+        verified:
+          type: boolean
+        createdAt:
+          type: string
+
+    ResidentWithUser:
+      type: object
+      required: [id, userId, address, contactNumber, verified, createdAt, user]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        birthdate:
+          type: ["string", "null"]
+        age:
+          type: ["integer", "null"]
+        gender:
+          type: ["string", "null"]
+        address:
+          type: string
+        purok:
+          type: ["string", "null"]
+        contactNumber:
+          type: string
+        emergencyContactName:
+          type: ["string", "null"]
+        emergencyContactNumber:
+          type: ["string", "null"]
+        verified:
+          type: boolean
+        createdAt:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    ResidentUpdate:
+      type: object
+      properties:
+        birthdate:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+        address:
+          type: string
+        purok:
+          type: string
+        contactNumber:
+          type: string
+        emergencyContactName:
+          type: string
+        emergencyContactNumber:
+          type: string
+
+    VerifyInput:
+      type: object
+      required: [verified]
+      properties:
+        verified:
+          type: boolean
+
+    DisableInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [active, disabled]
+
+    # Appointments
+    Appointment:
+      type: object
+      required: [id, residentId, patientName, reason, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        residentId:
+          type: string
+        scheduleId:
+          type: ["string", "null"]
+        patientName:
+          type: string
+        patientAge:
+          type: ["integer", "null"]
+        reason:
+          type: string
+        preferredDate:
+          type: ["string", "null"]
+        preferredTime:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected, rescheduled, completed, cancelled]
+        adminRemarks:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    AppointmentWithResident:
+      type: object
+      required: [id, residentId, patientName, reason, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        residentId:
+          type: string
+        scheduleId:
+          type: ["string", "null"]
+        patientName:
+          type: string
+        patientAge:
+          type: ["integer", "null"]
+        reason:
+          type: string
+        preferredDate:
+          type: ["string", "null"]
+        preferredTime:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected, rescheduled, completed, cancelled]
+        adminRemarks:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        resident:
+          $ref: "#/components/schemas/ResidentWithUser"
+
+    AppointmentInput:
+      type: object
+      required: [patientName, reason, preferredDate, preferredTime]
+      properties:
+        patientName:
+          type: string
+        patientAge:
+          type: integer
+        reason:
+          type: string
+        preferredDate:
+          type: string
+        preferredTime:
+          type: string
+        notes:
+          type: string
+
+    AppointmentUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, rejected, rescheduled, completed, cancelled]
+        adminRemarks:
+          type: string
+        preferredDate:
+          type: string
+        preferredTime:
+          type: string
+        scheduleId:
+          type: string
+
+    # Ambulance
+    AmbulanceRequest:
+      type: object
+      required: [id, residentId, patientName, exactLocation, contactNumber, emergencyType, urgencyLevel, status, requestedAt, updatedAt]
+      properties:
+        id:
+          type: string
+        residentId:
+          type: string
+        patientName:
+          type: string
+        exactLocation:
+          type: string
+        contactNumber:
+          type: string
+        emergencyType:
+          type: string
+        description:
+          type: ["string", "null"]
+        urgencyLevel:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string
+          enum: [pending, approved, rejected, dispatched, completed, cancelled]
+        adminRemarks:
+          type: ["string", "null"]
+        requestedAt:
+          type: string
+        updatedAt:
+          type: string
+
+    AmbulanceRequestWithResident:
+      type: object
+      required: [id, residentId, patientName, exactLocation, contactNumber, emergencyType, urgencyLevel, status, requestedAt, updatedAt]
+      properties:
+        id:
+          type: string
+        residentId:
+          type: string
+        patientName:
+          type: string
+        exactLocation:
+          type: string
+        contactNumber:
+          type: string
+        emergencyType:
+          type: string
+        description:
+          type: ["string", "null"]
+        urgencyLevel:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string
+          enum: [pending, approved, rejected, dispatched, completed, cancelled]
+        adminRemarks:
+          type: ["string", "null"]
+        requestedAt:
+          type: string
+        updatedAt:
+          type: string
+        resident:
+          $ref: "#/components/schemas/ResidentWithUser"
+
+    AmbulanceInput:
+      type: object
+      required: [patientName, exactLocation, contactNumber, emergencyType, urgencyLevel]
+      properties:
+        patientName:
+          type: string
+        exactLocation:
+          type: string
+        contactNumber:
+          type: string
+        emergencyType:
+          type: string
+        description:
+          type: string
+        urgencyLevel:
+          type: string
+          enum: [low, medium, high]
+
+    AmbulanceUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, rejected, dispatched, completed, cancelled]
+        adminRemarks:
+          type: string
+
+    # Health Schedules
+    HealthSchedule:
+      type: object
+      required: [id, scheduleDate, startTime, endTime, slotLimit, currentSlots, status, createdAt]
+      properties:
+        id:
+          type: string
+        scheduleDate:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        slotLimit:
+          type: integer
+        currentSlots:
+          type: integer
+        assignedStaff:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [open, closed, cancelled]
+        createdAt:
+          type: string
+
+    ScheduleInput:
+      type: object
+      required: [scheduleDate, startTime, endTime, slotLimit]
+      properties:
+        scheduleDate:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        slotLimit:
+          type: integer
+        assignedStaff:
+          type: string
+        status:
+          type: string
+          enum: [open, closed, cancelled]
+
+    ScheduleUpdate:
+      type: object
+      properties:
+        scheduleDate:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        slotLimit:
+          type: integer
+        assignedStaff:
+          type: string
+        status:
+          type: string
+          enum: [open, closed, cancelled]
+
+    # Notifications
+    Notification:
+      type: object
+      required: [id, userId, title, message, type, isRead, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [appointment, ambulance, system]
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+
+    NotificationInput:
+      type: object
+      required: [userId, title, message, type]
+      properties:
+        userId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [appointment, ambulance, system]
+
+    # Dashboard
+    AdminDashboard:
+      type: object
+      required: [totalResidents, pendingAppointments, approvedAppointments, pendingAmbulanceRequests, completedCheckups, recentAppointments, recentAmbulanceRequests, appointmentsByStatus, ambulanceByUrgency]
+      properties:
+        totalResidents:
+          type: integer
+        pendingAppointments:
+          type: integer
+        approvedAppointments:
+          type: integer
+        pendingAmbulanceRequests:
+          type: integer
+        completedCheckups:
+          type: integer
+        recentAppointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentWithResident"
+        recentAmbulanceRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/AmbulanceRequestWithResident"
+        appointmentsByStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        ambulanceByUrgency:
+          type: array
+          items:
+            $ref: "#/components/schemas/UrgencyCount"
+
+    ResidentDashboard:
+      type: object
+      required: [upcomingAppointment, recentAppointments, recentAmbulanceRequests, unreadNotifications]
+      properties:
+        upcomingAppointment:
+          $ref: "#/components/schemas/Appointment"
+        recentAppointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+        recentAmbulanceRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/AmbulanceRequest"
+        unreadNotifications:
+          type: integer
+
+    StatusCount:
+      type: object
+      required: [status, count]
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+
+    UrgencyCount:
+      type: object
+      required: [urgencyLevel, count]
+      properties:
+        urgencyLevel:
+          type: string
+        count:
+          type: integer
+
+    # Reports
+    Report:
+      type: object
+      required: [id, reportType, createdAt]
+      properties:
+        id:
+          type: string
+        generatedBy:
+          type: ["string", "null"]
+        reportType:
+          type: string
+        startDate:
+          type: ["string", "null"]
+        endDate:
+          type: ["string", "null"]
+        fileUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ReportInput:
+      type: object
+      required: [reportType]
+      properties:
+        reportType:
+          type: string
+          enum: [appointments, ambulance, residents, completed_checkups, monthly_summary]
+        startDate:
+          type: string
+        endDate:
+          type: string

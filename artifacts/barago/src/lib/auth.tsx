@@ -1,5 +1,5 @@
-import { createContext, useContext, ReactNode, useEffect } from "react";
-import { useGetCurrentUser, useLogoutUser } from "@workspace/api-client-react";
+import { createContext, useContext, ReactNode } from "react";
+import { useGetCurrentUser, useLogoutUser, getGetCurrentUserQueryKey } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
 type AuthContextType = {
@@ -14,6 +14,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading, refetch } = useGetCurrentUser({
     query: {
       retry: false,
+      queryKey: getGetCurrentUserQueryKey(),
     }
   });
 

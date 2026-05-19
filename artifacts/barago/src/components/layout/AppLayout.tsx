@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ReactNode } from "react";
+import { ReactNode, ElementType } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Calendar, Truck, Bell, Users, FileText, Clock, LogOut, Menu } from "lucide-react";
@@ -29,7 +29,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     { href: "/health-worker", label: "Appointments", icon: Calendar },
   ];
 
-  let links = [];
+  let links: { href: string; label: string; icon: ElementType }[] = [];
   if (user?.role === "admin") links = adminLinks;
   else if (user?.role === "health_worker") links = healthWorkerLinks;
   else if (user?.role === "resident") links = residentLinks;

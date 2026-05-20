@@ -15,13 +15,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { User, Lock, Eye, EyeOff, ArrowRight, Headset, Shield } from "lucide-react";
+import { Lock, Eye, EyeOff, ArrowRight, Headset, Shield, UserPlus } from "lucide-react";
 import { useState } from "react";
-import logo from "@assets/image_1779205170996.png";
-import loginIllustration from "@assets/ChatGPT_Image_May_20,_2026,_12_06_30_AM_(2)_1779287509628.png";
+import logoPath from "@assets/image_1779289197249.png";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().min(1, "Email is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -44,7 +43,6 @@ export default function Login() {
       await loginMutation.mutateAsync({ data });
       const { data: user } = await refetch();
       toast({ title: "Welcome back!" });
-      
       if (user?.role === "admin") {
         setLocation("/admin");
       } else if (user?.role === "health_worker") {
@@ -52,52 +50,35 @@ export default function Login() {
       } else {
         setLocation("/dashboard");
       }
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Invalid email or password. Please try again.";
+      toast({ title: "Login failed", description: msg, variant: "destructive" });
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* Top Header */}
-      <header className="p-4 md:p-6 flex justify-center items-center bg-white border-b">
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="BaraGo Logo" className="h-10 w-10 object-contain" />
-          <span className="text-2xl font-bold text-primary">BaraGo</span>
-        </div>
+      <header className="p-4 flex justify-center items-center bg-white border-b">
+        <Link href="/">
+          <img src={logoPath} alt="BaraGo Logo" className="h-10 w-auto object-contain" />
+        </Link>
       </header>
 
-      <main className="flex-1 flex flex-col md:flex-row items-center justify-center p-4 md:p-8 gap-8 max-w-7xl mx-auto w-full">
-        {/* Left Side: Text and Image on Desktop */}
-        <div className="hidden md:flex flex-1 flex-col justify-center gap-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-slate-900">Welcome Back!</h1>
-            <p className="text-lg text-slate-600">
-              Log in to access your barangay health services and stay updated with your healthcare needs.
-            </p>
-          </div>
-          <img 
-            src={loginIllustration} 
-            alt="Healthcare Illustration" 
-            className="w-full max-w-lg rounded-2xl shadow-lg"
-          />
-        </div>
-
-        {/* Right Side: Login Form */}
-        <div className="w-full max-w-md">
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm">
           <Card className="border-none shadow-xl rounded-2xl overflow-hidden">
             <CardContent className="p-8">
-              <div className="md:hidden mb-6 text-center">
+              <div className="flex flex-col items-center gap-1 mb-7">
                 <h1 className="text-2xl font-bold text-slate-900">Welcome Back!</h1>
-                <p className="text-slate-600">Log in to access your account</p>
+                <p className="text-sm text-slate-500 text-center">
+                  Log in to access your barangay health services.
+                </p>
               </div>
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                   <FormField
                     control={form.control}
                     name="email"
@@ -105,19 +86,18 @@ export default function Login() {
                       <FormItem>
                         <FormLabel className="text-slate-700 font-medium">Email or Username</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                            <Input 
-                              placeholder="name@example.com" 
-                              className="pl-10 h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary transition-all" 
-                              {...field} 
-                            />
-                          </div>
+                          <Input
+                            placeholder="name@example.com"
+                            autoComplete="email"
+                            className="h-11 bg-slate-50 border-slate-200"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="password"
@@ -125,25 +105,26 @@ export default function Login() {
                       <FormItem>
                         <div className="flex items-center justify-between">
                           <FormLabel className="text-slate-700 font-medium">Password</FormLabel>
-                          <Link href="/forgot-password" title="Forgot Password?" className="text-sm font-medium text-secondary hover:underline">
+                          <Link href="/forgot-password" className="text-xs font-medium text-[#2563EB] hover:underline">
                             Forgot Password?
                           </Link>
                         </div>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                            <Input 
-                              type={showPassword ? "text" : "password"} 
-                              placeholder="••••••••" 
-                              className="pl-10 pr-10 h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary transition-all" 
-                              {...field} 
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Enter your password"
+                              autoComplete="current-password"
+                              className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200"
+                              {...field}
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                             >
-                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                           </div>
                         </FormControl>
@@ -151,50 +132,64 @@ export default function Login() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full h-12 text-lg font-semibold bg-secondary hover:bg-secondary/90 shadow-md" disabled={loginMutation.isPending}>
-                    {loginMutation.isPending ? "Logging in..." : (
+
+                  <Button
+                    type="submit"
+                    className="w-full h-11 font-semibold bg-[#2563EB] hover:bg-[#2563EB]/90"
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending ? (
                       <span className="flex items-center gap-2">
-                        Log In <ArrowRight className="h-5 w-5" />
+                        <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Logging in...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        Log In <ArrowRight className="h-4 w-4" />
                       </span>
                     )}
                   </Button>
                 </form>
               </Form>
 
-              <div className="relative my-8 text-center">
+              <div className="relative my-5 text-center">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-slate-200" />
                 </div>
-                <span className="relative px-4 bg-white text-sm text-slate-500 uppercase font-medium">or</span>
+                <span className="relative px-3 bg-white text-xs text-slate-400 uppercase">or</span>
               </div>
 
-              <Button variant="outline" className="w-full h-12 text-lg font-semibold border-secondary text-secondary hover:bg-secondary/5" asChild>
+              <Button
+                variant="outline"
+                className="w-full h-11 font-semibold border-primary text-primary hover:bg-primary/5"
+                asChild
+              >
                 <Link href="/register">
-                  <span className="flex items-center gap-2">
-                    Create Account <User className="h-5 w-5" />
-                  </span>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create Account
                 </Link>
               </Button>
+
+              <div className="mt-6 flex items-start gap-3 text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <Headset className="h-5 w-5 text-slate-400 shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed">
+                  Need help? Contact your barangay health center or call the{" "}
+                  <a href="tel:911" className="text-destructive font-semibold">emergency hotline</a>{" "}
+                  for assistance.
+                </p>
+              </div>
             </CardContent>
           </Card>
-
-          <div className="mt-8 flex items-center gap-3 text-slate-500 bg-white/50 p-4 rounded-xl border border-dashed border-slate-300">
-            <Headset className="h-6 w-6 text-slate-400 shrink-0" />
-            <p className="text-sm leading-relaxed">
-              Need help? Contact your barangay health center or call the emergency hotline for assistance.
-            </p>
-          </div>
         </div>
       </main>
 
-      {/* Blue Footer Bar */}
-      <footer className="mt-auto bg-secondary text-white py-4 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-          <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6" />
-            <p className="font-semibold uppercase tracking-wide text-sm">BaraGo Barangay Healthcare Scheduling System</p>
+      <footer className="bg-[#2563EB] text-white py-4 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-center">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            <p className="font-semibold uppercase tracking-wide text-xs">BaraGo Barangay Healthcare Scheduling System</p>
           </div>
-          <p className="text-sm opacity-90 italic">"Improving lives. Building healthier communities."</p>
+          <p className="text-xs opacity-90 italic">"Improving lives. Building healthier communities."</p>
         </div>
       </footer>
     </div>

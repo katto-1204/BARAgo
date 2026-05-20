@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { ReactNode } from "react";
-import logoPath from "@assets/image_1779205170996.png";
+import logoPath from "@assets/image_1779289197249.png";
 import { Shield } from "lucide-react";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
@@ -9,15 +9,9 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img 
-              src={logoPath} 
-              alt="BaraGo Logo" 
-              className="h-8 w-8 object-contain"
-              style={{ filter: "invert(40%) sepia(85%) saturate(350%) hue-rotate(95deg) brightness(95%) contrast(90%)" }}
-            />
-            <span className="font-bold text-xl text-primary">BaraGo</span>
+            <img src={logoPath} alt="BaraGo Logo" className="h-9 w-auto object-contain" />
           </Link>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-3">
             <Link href="/login" className="text-sm font-medium border border-primary text-primary px-4 py-2 rounded-md hover:bg-primary/5">
               Login
             </Link>
@@ -36,9 +30,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             <Shield className="w-5 h-5" />
             <span className="font-semibold">BaraGo Barangay Healthcare Scheduling System</span>
           </div>
-          <p className="text-sm opacity-90">
-            Improving lives. Building healthier communities.
-          </p>
+          <p className="text-sm opacity-90">Improving lives. Building healthier communities.</p>
           <div className="mt-4 text-xs opacity-75">
             &copy; {new Date().getFullYear()} BaraGo. All rights reserved.
           </div>

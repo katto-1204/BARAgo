@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useListAppointments, getListAppointmentsQueryKey, useUpdateAppointment, useCancelAppointment } from "@workspace/api-client-react";
+import React, { useState, useMemo } from "react";
+import { useListAppointments, getListAppointmentsQueryKey, useUpdateAppointment } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -12,9 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/StatusBadges";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar } from "lucide-react";
-
-const STATUS_OPTIONS = ["all", "pending", "approved", "rejected", "rescheduled", "completed", "cancelled"];
+import { Calendar, Search, Filter, Check, X, Eye, ChevronDown, ChevronUp, Clock, Clipboard, MapPin } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ActionDialog = {
   type: "approve" | "reject" | "reschedule" | "complete";
@@ -24,6 +24,8 @@ type ActionDialog = {
 
 export default function ManageAppointments() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dialog, setDialog] = useState<ActionDialog | null>(null);
   const [remarks, setRemarks] = useState("");
   const [reschedDate, setReschedDate] = useState("");
@@ -31,12 +33,33 @@ export default function ManageAppointments() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const params = statusFilter !== "all" ? { status: statusFilter } : {};
-  const { data: appointments, isLoading } = useListAppointments(params, {
-    query: { queryKey: getListAppointmentsQueryKey(params) },
+  const { data: appointments, isLoading } = useListAppointments({}, {
+    query: { queryKey: getListAppointmentsQueryKey({}) },
   });
 
   const updateMutation = useUpdateAppointment();
+
+  const filteredAppointments = useMemo(() => {
+    if (!appointments) return [];
+    return appointments.filter(appt => {
+      const matchesStatus = statusFilter === "all" || appt.status === statusFilter;
+      const matchesSearch = appt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          appt.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          appt.id.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesStatus && matchesSearch;
+    });
+  }, [appointments, statusFilter, searchQuery]);
+
+  const counts = useMemo(() => {
+    if (!appointments) return { all: 0, pending: 0, approved: 0, rescheduled: 0, completed: 0 };
+    return {
+      all: appointments.length,
+      pending: appointments.filter(a => a.status === "pending").length,
+      approved: appointments.filter(a => a.status === "approved").length,
+      rescheduled: appointments.filter(a => a.status === "rescheduled").length,
+      completed: appointments.filter(a => a.status === "completed").length,
+    };
+  }, [appointments]);
 
   const handleAction = () => {
     if (!dialog) return;
@@ -46,7 +69,7 @@ export default function ManageAppointments() {
       reschedule: "rescheduled",
       complete: "completed",
     };
-    const payload: Record<string, string> = { status: statusMap[dialog.type] };
+    const payload: Record<string, any> = { status: statusMap[dialog.type] };
     if (remarks) payload.adminRemarks = remarks;
     if (dialog.type === "reschedule" && reschedDate) payload.preferredDate = reschedDate;
     if (dialog.type === "reschedule" && reschedTime) payload.preferredTime = reschedTime;
@@ -75,84 +98,195 @@ export default function ManageAppointments() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Manage Appointments</h1>
+          <h1 className="text-2xl font-bold font-heading">Manage Appointments</h1>
           <p className="text-muted-foreground mt-1">Review and act on appointment requests</p>
         </div>
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48" data-testid="select-status-filter">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map(s => (
-              <SelectItem key={s} value={s}>{s === "all" ? "All Statuses" : s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-4">
+          <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
+            <TabsList className="bg-transparent h-auto p-0 flex-wrap gap-2">
+              <TabsTrigger value="all" className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-white px-4 py-1.5 h-auto">
+                All [{counts.all}]
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="rounded-full border data-[state=active]:bg-yellow-500 data-[state=active]:text-white px-4 py-1.5 h-auto">
+                Pending [{counts.pending}]
+              </TabsTrigger>
+              <TabsTrigger value="approved" className="rounded-full border data-[state=active]:bg-green-600 data-[state=active]:text-white px-4 py-1.5 h-auto">
+                Approved [{counts.approved}]
+              </TabsTrigger>
+              <TabsTrigger value="rescheduled" className="rounded-full border data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-1.5 h-auto">
+                Rescheduled [{counts.rescheduled}]
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="rounded-full border data-[state=active]:bg-green-800 data-[state=active]:text-white px-4 py-1.5 h-auto">
+                Completed [{counts.completed}]
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        {isLoading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>
-        ) : (appointments?.length ?? 0) === 0 ? (
-          <Card><CardContent className="py-12 text-center">
-            <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-muted-foreground">No appointments found</p>
-          </CardContent></Card>
-        ) : (
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[300px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search by name, reason, or ID..." 
+                className="pl-10 bg-white" 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filter
+            </Button>
+          </div>
+        </div>
+
+        <Card className="border-none shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border rounded-lg overflow-hidden">
-              <thead className="bg-muted">
-                <tr className="text-left">
-                  <th className="px-4 py-3 font-medium">Patient</th>
-                  <th className="px-4 py-3 font-medium">Date / Time</th>
-                  <th className="px-4 py-3 font-medium">Reason</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr className="text-left border-b">
+                  <th className="px-4 py-3 font-semibold text-muted-foreground">Patient</th>
+                  <th className="px-4 py-3 font-semibold text-muted-foreground">Date & Time</th>
+                  <th className="px-4 py-3 font-semibold text-muted-foreground">Reason</th>
+                  <th className="px-4 py-3 font-semibold text-muted-foreground text-center">Status</th>
+                  <th className="px-4 py-3 font-semibold text-muted-foreground text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {appointments?.map((appt) => (
-                  <tr key={appt.id} data-testid={`row-appointment-${appt.id}`} className="border-t hover:bg-muted/50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium">{appt.patientName}</p>
-                      {appt.resident?.user?.fullName && appt.resident.user.fullName !== appt.patientName && (
-                        <p className="text-xs text-muted-foreground">Resident: {appt.resident.user.fullName}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      <p>{appt.preferredDate}</p>
-                      <p>{appt.preferredTime}</p>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground max-w-xs">
-                      <p className="truncate">{appt.reason}</p>
-                      {appt.adminRemarks && <p className="text-xs truncate text-primary">{appt.adminRemarks}</p>}
-                    </td>
-                    <td className="px-4 py-3"><StatusBadge status={appt.status} /></td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {appt.status === "pending" && (
-                          <>
-                            <Button size="sm" onClick={() => openDialog("approve", appt.id, appt.patientName)} data-testid={`button-approve-${appt.id}`}>Approve</Button>
-                            <Button size="sm" variant="destructive" onClick={() => openDialog("reject", appt.id, appt.patientName)} data-testid={`button-reject-${appt.id}`}>Reject</Button>
-                            <Button size="sm" variant="outline" onClick={() => openDialog("reschedule", appt.id, appt.patientName)} data-testid={`button-reschedule-${appt.id}`}>Reschedule</Button>
-                          </>
-                        )}
-                        {appt.status === "approved" && (
-                          <Button size="sm" variant="outline" onClick={() => openDialog("complete", appt.id, appt.patientName)} data-testid={`button-complete-${appt.id}`}>Complete</Button>
-                        )}
-                        {appt.status === "rescheduled" && (
-                          <>
-                            <Button size="sm" onClick={() => openDialog("approve", appt.id, appt.patientName)}>Approve</Button>
-                            <Button size="sm" variant="outline" onClick={() => openDialog("complete", appt.id, appt.patientName)}>Complete</Button>
-                          </>
-                        )}
-                      </div>
+              <tbody className="divide-y bg-white">
+                {isLoading ? (
+                  [1, 2, 3].map(i => (
+                    <tr key={i}><td colSpan={5} className="p-4"><Skeleton className="h-16 w-full" /></td></tr>
+                  ))
+                ) : filteredAppointments.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                      <Calendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                      No appointments found matching your criteria.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredAppointments.map((appt) => (
+                    <React.Fragment key={appt.id}>
+                      <tr 
+                        className={`hover:bg-muted/30 transition-colors cursor-pointer ${expandedId === appt.id ? 'bg-muted/30' : ''}`}
+                        onClick={() => setExpandedId(expandedId === appt.id ? null : appt.id)}
+                      >
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                                {appt.patientName.split(" ").map(n => n[0]).join("").toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-bold">{appt.patientName}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">BG-{appt.id.slice(0, 8).toUpperCase()}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <Calendar className="h-3 w-3 text-primary" />
+                              <span className="font-medium">{appt.preferredDate}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span>Requested: 10:30 AM</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-1.5">
+                            <Clipboard className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="font-medium text-xs">{appt.reason}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <StatusBadge status={appt.status} />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={(e) => { e.stopPropagation(); openDialog("approve", appt.id, appt.patientName); }} disabled={appt.status !== 'pending' && appt.status !== 'rescheduled'}>
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); openDialog("reject", appt.id, appt.patientName); }} disabled={appt.status !== 'pending'}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); openDialog("reschedule", appt.id, appt.patientName); }} disabled={appt.status !== 'pending'}>
+                              <Calendar className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {expandedId === appt.id ? <ChevronUp className="h-4 w-4 ml-1 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 ml-1 text-muted-foreground" />}
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedId === appt.id && (
+                        <tr className="bg-muted/20 border-t">
+                          <td colSpan={5} className="p-6">
+                            <div className="grid gap-6 md:grid-cols-2">
+                              <div className="space-y-4">
+                                <h4 className="font-bold text-sm underline decoration-primary decoration-2 underline-offset-4">Appointment Info</h4>
+                                <div className="space-y-3">
+                                  <div className="flex items-start gap-3">
+                                    <MapPin className="h-4 w-4 text-primary mt-0.5" />
+                                    <div>
+                                      <p className="text-xs font-bold uppercase text-muted-foreground">Location</p>
+                                      <p className="text-sm font-medium">BaraGo Health Center</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                    <Clipboard className="h-4 w-4 text-primary mt-0.5" />
+                                    <div>
+                                      <p className="text-xs font-bold uppercase text-muted-foreground">Service / Reason</p>
+                                      <p className="text-sm font-medium">{appt.reason}</p>
+                                    </div>
+                                  </div>
+                                  {appt.adminRemarks && (
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                      <p className="text-[10px] font-bold uppercase text-blue-700 mb-1">Admin Remarks</p>
+                                      <p className="text-sm text-blue-900">{appt.adminRemarks}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="space-y-4">
+                                <h4 className="font-bold text-sm underline decoration-primary decoration-2 underline-offset-4">Admin Actions</h4>
+                                <div className="space-y-3">
+                                  <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold uppercase text-muted-foreground">Quick Change Status</Label>
+                                    <Select value={appt.status} onValueChange={(val) => openDialog(val as any, appt.id, appt.patientName)}>
+                                      <SelectTrigger className="bg-white h-9">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="approved">Approve</SelectItem>
+                                        <SelectItem value="rejected">Reject</SelectItem>
+                                        <SelectItem value="rescheduled">Reschedule</SelectItem>
+                                        <SelectItem value="completed">Complete</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => openDialog("approve", appt.id, appt.patientName)} disabled={appt.status !== 'pending' && appt.status !== 'rescheduled'}>Approve</Button>
+                                    <Button size="sm" variant="outline" className="flex-1" onClick={() => openDialog("reschedule", appt.id, appt.patientName)} disabled={appt.status !== 'pending'}>Reschedule</Button>
+                                    <Button size="sm" variant="destructive" className="flex-1" onClick={() => openDialog("reject", appt.id, appt.patientName)} disabled={appt.status !== 'pending'}>Reject</Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        )}
+        </Card>
       </div>
 
       <Dialog open={!!dialog} onOpenChange={() => setDialog(null)}>
@@ -171,15 +305,15 @@ export default function ManageAppointments() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>New Date</Label>
-                  <Input type="date" value={reschedDate} onChange={e => setReschedDate(e.target.value)} data-testid="input-reschedule-date" />
+                  <Input type="date" value={reschedDate} onChange={e => setReschedDate(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>New Time</Label>
                   <Select value={reschedTime} onValueChange={setReschedTime}>
-                    <SelectTrigger data-testid="select-reschedule-time"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="morning">Morning</SelectItem>
-                      <SelectItem value="afternoon">Afternoon</SelectItem>
+                      <SelectItem value="morning">Morning (8 AM - 12 PM)</SelectItem>
+                      <SelectItem value="afternoon">Afternoon (1 PM - 5 PM)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -187,12 +321,12 @@ export default function ManageAppointments() {
             )}
             <div className="space-y-1.5">
               <Label>Remarks (optional)</Label>
-              <Textarea value={remarks} onChange={e => setRemarks(e.target.value)} placeholder="Add remarks for the resident..." data-testid="input-remarks" />
+              <Textarea value={remarks} onChange={e => setRemarks(e.target.value)} placeholder="Add remarks for the resident..." />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button onClick={handleAction} disabled={updateMutation.isPending} data-testid="button-confirm-action">
+            <Button onClick={handleAction} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Processing..." : "Confirm"}
             </Button>
           </DialogFooter>

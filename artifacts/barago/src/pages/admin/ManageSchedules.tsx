@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Plus } from "lucide-react";
+import { Clock, Plus, Calendar as CalendarIcon, Users, Edit2, Trash2, ChevronRight, User } from "lucide-react";
 
 type ScheduleForm = { scheduleDate: string; startTime: string; endTime: string; slotLimit: string; assignedStaff: string; status: string };
 const DEFAULT_FORM: ScheduleForm = { scheduleDate: "", startTime: "", endTime: "", slotLimit: "20", assignedStaff: "", status: "open" };
@@ -96,115 +96,143 @@ export default function ManageSchedules() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Manage Schedules</h1>
-            <p className="text-muted-foreground mt-1">Create and manage available checkup schedules</p>
+            <h1 className="text-2xl font-bold tracking-tight">Health Schedules</h1>
+            <p className="text-muted-foreground mt-1">Manage available checkup slots and staff assignments.</p>
           </div>
-          <Button onClick={openCreate} data-testid="button-add-schedule">
-            <Plus className="mr-2 h-4 w-4" /> Add Schedule
+          <Button onClick={openCreate} className="bg-green-600 hover:bg-green-700" data-testid="button-add-schedule">
+            <Plus className="mr-2 h-4 w-4" /> New Schedule
           </Button>
         </div>
 
         {isLoading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full" />)}</div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}
+          </div>
         ) : (schedules?.length ?? 0) === 0 ? (
-          <Card><CardContent className="py-12 text-center">
-            <Clock className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-muted-foreground">No schedules yet</p>
-            <Button onClick={openCreate} className="mt-4">Create first schedule</Button>
-          </CardContent></Card>
+          <Card className="border-dashed">
+            <CardContent className="py-12 text-center">
+              <div className="bg-muted rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-6 w-6 text-muted-foreground opacity-50" />
+              </div>
+              <p className="text-lg font-medium">No schedules defined</p>
+              <p className="text-muted-foreground mb-6">Start by creating the first available health checkup schedule.</p>
+              <Button onClick={openCreate} variant="outline">Create First Schedule</Button>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border rounded-lg overflow-hidden">
-              <thead className="bg-muted">
-                <tr className="text-left">
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Time</th>
-                  <th className="px-4 py-3 font-medium">Slots</th>
-                  <th className="px-4 py-3 font-medium">Staff</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schedules?.map((sched) => (
-                  <tr key={sched.id} data-testid={`row-schedule-${sched.id}`} className="border-t hover:bg-muted/50">
-                    <td className="px-4 py-3 font-medium">{sched.scheduleDate}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{sched.startTime} - {sched.endTime}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{sched.currentSlots} / {sched.slotLimit}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{sched.assignedStaff ?? "-"}</td>
-                    <td className="px-4 py-3">
-                      <Badge className={`text-xs ${STATUS_COLORS[sched.status] ?? ""}`}>{sched.status}</Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(sched)} data-testid={`button-edit-${sched.id}`}>Edit</Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive" data-testid={`button-delete-${sched.id}`}>Delete</Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Schedule?</AlertDialogTitle>
-                              <AlertDialogDescription>This will permanently delete the schedule for {sched.scheduleDate}.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(sched.id)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {schedules?.map((sched) => (
+              <Card key={sched.id} data-testid={`row-schedule-${sched.id}`} className="overflow-hidden hover:shadow-md transition-shadow">
+                <CardContent className="p-5">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-2 rounded-lg">
+                        <CalendarIcon className="h-5 w-5 text-primary" />
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div>
+                        <p className="font-bold text-lg leading-tight">{new Date(sched.scheduleDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                        <p className="text-sm text-muted-foreground">{sched.startTime} - {sched.endTime}</p>
+                      </div>
+                    </div>
+                    <Badge className={`text-[10px] uppercase font-bold tracking-wider ${STATUS_COLORS[sched.status] ?? ""}`}>{sched.status}</Badge>
+                  </div>
+
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-center text-sm">
+                      <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-muted-foreground mr-2">Slots:</span>
+                      <span className="font-semibold">{sched.currentSlots} / {sched.slotLimit}</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-muted-foreground mr-2">Staff:</span>
+                      <span className="font-semibold truncate">{sched.assignedStaff || "Unassigned"}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button size="sm" variant="outline" className="flex-1 h-8" onClick={() => handleEdit(sched)} data-testid={`button-edit-${sched.id}`}>
+                      <Edit2 className="h-3.5 w-3.5 mr-1" /> Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="ghost" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" data-testid={`button-delete-${sched.id}`}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Schedule?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the schedule for {sched.scheduleDate}. Residents will no longer be able to book slots for this date.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(sched.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{editingId ? "Edit Schedule" : "Add Schedule"}</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid gap-3 sm:grid-cols-2">
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-primary" />
+              {editingId ? "Edit Schedule" : "Create New Schedule"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="date">Date</Label>
+              <Input id="date" type="date" value={form.scheduleDate} onChange={e => setForm(f => ({...f, scheduleDate: e.target.value}))} data-testid="input-schedule-date" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Date</Label>
-                <Input type="date" value={form.scheduleDate} onChange={e => setForm(f => ({...f, scheduleDate: e.target.value}))} data-testid="input-schedule-date" />
+                <Label htmlFor="start">Start Time</Label>
+                <Input id="start" type="time" value={form.startTime} onChange={e => setForm(f => ({...f, startTime: e.target.value}))} data-testid="input-start-time" />
               </div>
               <div className="space-y-1.5">
-                <Label>Slot Limit</Label>
-                <Input type="number" value={form.slotLimit} onChange={e => setForm(f => ({...f, slotLimit: e.target.value}))} data-testid="input-slot-limit" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Start Time</Label>
-                <Input type="time" value={form.startTime} onChange={e => setForm(f => ({...f, startTime: e.target.value}))} data-testid="input-start-time" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>End Time</Label>
-                <Input type="time" value={form.endTime} onChange={e => setForm(f => ({...f, endTime: e.target.value}))} data-testid="input-end-time" />
+                <Label htmlFor="end">End Time</Label>
+                <Input id="end" type="time" value={form.endTime} onChange={e => setForm(f => ({...f, endTime: e.target.value}))} data-testid="input-end-time" />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Assigned Staff</Label>
-              <Input value={form.assignedStaff} onChange={e => setForm(f => ({...f, assignedStaff: e.target.value}))} placeholder="Doctor, nurse, or health worker name" data-testid="input-assigned-staff" />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="slots">Slot Limit</Label>
+                <Input id="slots" type="number" value={form.slotLimit} onChange={e => setForm(f => ({...f, slotLimit: e.target.value}))} data-testid="input-slot-limit" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={v => setForm(f => ({...f, status: v}))}>
+                  <SelectTrigger data-testid="select-schedule-status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
             <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={v => setForm(f => ({...f, status: v}))}>
-                <SelectTrigger data-testid="select-schedule-status"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="staff">Assigned Staff</Label>
+              <Input id="staff" value={form.assignedStaff} onChange={e => setForm(f => ({...f, assignedStaff: e.target.value}))} placeholder="Doctor, nurse, or health worker name" data-testid="input-assigned-staff" />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isPending} data-testid="button-save-schedule">
-              {isPending ? "Saving..." : "Save"}
+            <Button onClick={handleSave} disabled={isPending} className="bg-green-600 hover:bg-green-700" data-testid="button-save-schedule">
+              {isPending ? "Saving..." : editingId ? "Update Schedule" : "Create Schedule"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -212,3 +240,4 @@ export default function ManageSchedules() {
     </AppLayout>
   );
 }
+

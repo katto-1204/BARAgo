@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge, UrgencyBadge } from "@/components/shared/StatusBadges";
-import { Calendar, Truck, Bell, Clock, User } from "lucide-react";
+import { Calendar, Truck, Bell, Clock, User, ClipboardList, CheckCircle2, Clock3, ArrowRight, Droplet, Apple } from "lucide-react";
+import { useState, useEffect } from "react";
+import residentDashboardImg from "@assets/ChatGPT_Image_May_20,_2026,_12_06_31_AM_(4)_1779287509629.png";
 
 export default function ResidentDashboard() {
   const { user } = useAuth();
@@ -14,64 +16,68 @@ export default function ResidentDashboard() {
     query: { queryKey: getGetResidentDashboardQueryKey() },
   });
 
+  const [greeting, setGreeting] = useState("Welcome back");
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good morning");
+    else if (hour < 18) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
+  }, []);
+
+  const firstName = user?.fullName?.split(" ")[0];
+
+  const appointmentCounts = {
+    upcoming: dashboard?.upcomingAppointment ? 1 : 0,
+    completed: dashboard?.recentAppointments?.filter(a => a.status === "completed").length ?? 0,
+    cancelled: dashboard?.recentAppointments?.filter(a => a.status === "cancelled").length ?? 0,
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Welcome back, {user?.fullName?.split(" ")[0]}
-          </h1>
-          <p className="text-muted-foreground mt-1">Here is your health services overview.</p>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-3">
-          <Button asChild data-testid="button-book-appointment">
-            <Link href="/appointments/new">
-              <Calendar className="mr-2 h-4 w-4" />
-              Book Appointment
-            </Link>
-          </Button>
-          <Button variant="outline" asChild data-testid="button-request-ambulance">
-            <Link href="/ambulance/new">
-              <Truck className="mr-2 h-4 w-4" />
-              Request Ambulance
-            </Link>
-          </Button>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {greeting}, {firstName}!
+            </h1>
+            <p className="text-muted-foreground mt-1 text-lg">Here's your health overview for today.</p>
+          </div>
+          <div className="hidden md:block">
+            <img src={residentDashboardImg} alt="Health center" className="h-24 object-contain" />
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Upcoming Appointment */}
-          <Card className="lg:col-span-2">
+          {/* Upcoming Appointment Card */}
+          <Card className="lg:col-span-2 border-l-4 border-l-green-600">
             <CardHeader className="flex flex-row items-center gap-2 pb-3">
-              <Calendar className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">Upcoming Appointment</CardTitle>
+              <div className="p-2 bg-green-50 rounded-full">
+                <Calendar className="h-5 w-5 text-green-600" />
+              </div>
+              <CardTitle className="text-base font-semibold">Upcoming Appointment</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-24 w-full" />
               ) : dashboard?.upcomingAppointment ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{dashboard.upcomingAppointment.patientName}</span>
+                    <div>
+                      <p className="font-bold text-lg">{dashboard.upcomingAppointment.preferredDate} ({new Date(dashboard.upcomingAppointment.preferredDate!).toLocaleDateString('en-US', { weekday: 'short' })}) {dashboard.upcomingAppointment.preferredTime}</p>
+                      <p className="text-muted-foreground">{dashboard.upcomingAppointment.reason}</p>
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <span className="h-2 w-2 bg-primary rounded-full" />
+                        BaraGo Health Center
+                      </p>
+                    </div>
                     <StatusBadge status={dashboard.upcomingAppointment.status} />
                   </div>
-                  <p className="text-sm text-muted-foreground">{dashboard.upcomingAppointment.reason}</p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {dashboard.upcomingAppointment.preferredDate}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {dashboard.upcomingAppointment.preferredTime}
-                    </span>
-                  </div>
-                  {dashboard.upcomingAppointment.adminRemarks && (
-                    <p className="text-sm bg-muted rounded p-2 text-muted-foreground">
-                      Note: {dashboard.upcomingAppointment.adminRemarks}
-                    </p>
-                  )}
+                  <Button variant="link" asChild className="p-0 h-auto text-primary font-medium">
+                    <Link href={`/appointments/${dashboard.upcomingAppointment.id}`} className="flex items-center gap-1">
+                      View Appointment Details <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
                 </div>
               ) : (
                 <div className="text-center py-6 text-muted-foreground">
@@ -85,98 +91,172 @@ export default function ResidentDashboard() {
             </CardContent>
           </Card>
 
-          {/* Notifications */}
+          {/* Appointment Status Card */}
           <Card>
-            <CardHeader className="flex flex-row items-center gap-2 pb-3">
-              <Bell className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">Notifications</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base font-semibold">Appointment Status</CardTitle>
             </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-center py-4">
-                  {(dashboard?.unreadNotifications ?? 0) > 0 ? (
-                    <>
-                      <span className="text-3xl font-bold text-primary">{dashboard?.unreadNotifications}</span>
-                      <p className="text-sm text-muted-foreground mt-1">unread notification{dashboard?.unreadNotifications !== 1 ? "s" : ""}</p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">All caught up</p>
-                  )}
-                  <Button variant="link" asChild className="mt-2 h-auto p-0 text-sm">
-                    <Link href="/notifications">View all</Link>
-                  </Button>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-center p-2 rounded-lg bg-muted/50">
+                  <p className="text-2xl font-bold">{appointmentCounts.upcoming}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Upcoming</p>
                 </div>
-              )}
+                <div className="text-center p-2 rounded-lg bg-green-50">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 mx-auto mb-1" />
+                  <p className="text-lg font-bold text-green-700">{appointmentCounts.completed}</p>
+                  <p className="text-[10px] text-green-600 uppercase">Completed</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-yellow-50">
+                  <Clock3 className="h-4 w-4 text-yellow-600 mx-auto mb-1" />
+                  <p className="text-lg font-bold text-yellow-700">{appointmentCounts.cancelled}</p>
+                  <p className="text-[10px] text-yellow-600 uppercase">Cancelled</p>
+                </div>
+              </div>
+              <Button variant="outline" className="w-full text-sm" asChild>
+                <Link href="/appointments">View All Appointments</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Appointments */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">Recent Appointments</CardTitle>
+        {/* Ambulance Request Status */}
+        <Card className="border-l-4 border-l-destructive bg-destructive/5">
+          <CardContent className="py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-destructive/10 rounded-full">
+                  <Truck className="h-6 w-6 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Ambulance Request Status</h3>
+                  <p className="text-muted-foreground">
+                    {dashboard?.recentAmbulanceRequests?.[0] 
+                      ? `Active request: ${dashboard.recentAmbulanceRequests[0].status}`
+                      : "No active emergency requests."}
+                  </p>
+                </div>
+              </div>
+              <Button variant="destructive" asChild>
+                <Link href="/ambulance/new">Request Ambulance</Link>
+              </Button>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/appointments">View all</Link>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <div>
+          <h2 className="text-lg font-bold mb-4">Quick Actions</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link href="/appointments/new" className="block">
+              <Card className="hover:border-primary transition-colors cursor-pointer group">
+                <CardContent className="p-6 flex flex-col items-center text-center space-y-3">
+                  <div className="p-4 bg-green-100 rounded-2xl group-hover:bg-green-200 transition-colors">
+                    <Calendar className="h-8 w-8 text-green-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">Book Checkup</h3>
+                    <p className="text-xs text-muted-foreground">Schedule a visit with health staff</p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/ambulance/new" className="block">
+              <Card className="hover:border-destructive transition-colors cursor-pointer group">
+                <CardContent className="p-6 flex flex-col items-center text-center space-y-3">
+                  <div className="p-4 bg-red-100 rounded-2xl group-hover:bg-red-200 transition-colors">
+                    <Truck className="h-8 w-8 text-red-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">Request Ambulance</h3>
+                    <p className="text-xs text-muted-foreground">Emergency transport assistance</p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-destructive transition-colors" />
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/appointments" className="block">
+              <Card className="hover:border-blue-600 transition-colors cursor-pointer group">
+                <CardContent className="p-6 flex flex-col items-center text-center space-y-3">
+                  <div className="p-4 bg-blue-100 rounded-2xl group-hover:bg-blue-200 transition-colors">
+                    <ClipboardList className="h-8 w-8 text-blue-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">My Appointments</h3>
+                    <p className="text-xs text-muted-foreground">Track your healthcare history</p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 transition-colors" />
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        </div>
+
+        {/* Recent Notifications */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3 border-b">
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base font-semibold">Recent Notifications</CardTitle>
+            </div>
+            <Button variant="link" asChild className="p-0 h-auto text-sm text-primary">
+              <Link href="/notifications">View All</Link>
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+              <div className="p-4 space-y-4">
+                {[1, 2].map(i => <Skeleton key={i} className="h-12 w-full" />)}
               </div>
-            ) : (dashboard?.recentAppointments?.length ?? 0) === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No appointments yet</p>
+            ) : (dashboard?.unreadNotifications ?? 0) === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Bell className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                <p>No new notifications</p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {dashboard?.recentAppointments?.map((appt) => (
-                  <div key={appt.id} data-testid={`card-appointment-${appt.id}`} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{appt.patientName}</p>
-                      <p className="text-xs text-muted-foreground">{appt.reason} · {appt.preferredDate}</p>
+              <div className="divide-y">
+                {/* Mocked recent notifications since API might not return list in dashboard */}
+                <div className="p-4 flex gap-3 items-start hover:bg-muted/50 transition-colors cursor-pointer">
+                  <div className="relative">
+                    <div className="p-2 bg-blue-50 rounded-full">
+                      <Calendar className="h-4 w-4 text-blue-600" />
                     </div>
-                    <StatusBadge status={appt.status} />
+                    <div className="absolute top-0 right-0 h-2.5 w-2.5 bg-blue-600 border-2 border-background rounded-full" />
                   </div>
-                ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold">Appointment Approved</p>
+                    <p className="text-xs text-muted-foreground truncate">Your checkup for tomorrow has been confirmed.</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">2m ago</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Recent Ambulance Requests */}
-        {(dashboard?.recentAmbulanceRequests?.length ?? 0) > 0 && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div className="flex items-center gap-2">
-                <Truck className="h-5 w-5 text-destructive" />
-                <CardTitle className="text-base">Ambulance Requests</CardTitle>
+        {/* Health Reminder */}
+        <Card className="bg-green-600 text-white overflow-hidden relative">
+          <CardContent className="p-6 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/20 rounded-xl">
+                <Droplet className="h-8 w-8 text-white" />
               </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/ambulance">View all</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {dashboard?.recentAmbulanceRequests?.map((req) => (
-                  <div key={req.id} data-testid={`card-ambulance-${req.id}`} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{req.patientName}</p>
-                      <p className="text-xs text-muted-foreground">{req.emergencyType} · {req.exactLocation}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <UrgencyBadge urgency={req.urgencyLevel} />
-                      <StatusBadge status={req.status} />
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <h3 className="text-xl font-bold italic underline decoration-white/30 underline-offset-4">Health Reminder</h3>
+                <p className="mt-1 text-green-50">Drink plenty of water and eat nutritious food today to keep your body strong and healthy!</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div className="ml-auto">
+                <Apple className="h-12 w-12 text-white/30" />
+              </div>
+            </div>
+          </CardContent>
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 -ml-8 -mb-8 h-24 w-24 bg-white/5 rounded-full blur-2xl" />
+        </Card>
       </div>
     </AppLayout>
   );

@@ -1,0 +1,159 @@
+DAVAO CITY HOSPITALS / INFIRMARIES
+Source basis: PhilHealth List of Accredited Hospitals and Infirmaries for CY 2026, updated March 31, 2026.
+Note: SPMC is placed first as the MAIN government hospital, following your note that it is the main/free option.
+
+1. Southern Philippines Medical Center (SPMC) - MAIN / Government
+   Category: Level 3
+   Sector: Government
+   Address: J.P. Laurel Ave., Bajada, Davao City
+
+2. Adventist Hospital-Davao, Inc.
+   Category: Level 2
+   Sector: Private
+   Address: Km. 7 McArthur Highway, Bangkal, Brgy. Talomo, Talomo District, Davao City
+
+3. Alterado General Hospital, Inc.
+   Category: Level 2
+   Sector: Private
+   Address: P. Villanueva St. corner R. Castillo, Brgy. Gov. V. Duterte, Agdao, Davao City
+
+4. Anda Riverview Medical Center, Inc.
+   Category: Level 2
+   Sector: Private
+   Address: Brgy. 2A, Magallanes St., Davao City
+
+5. Brokenshire Medical Center
+   Category: Level 3
+   Sector: Private
+   Address: Brokenshire Heights, Madapo, Brgy. 8-A, Poblacion District, Davao City
+
+6. Buda Community Health Care Center
+   Category: Infirmary/Dispensary
+   Sector: Private
+   Address: Purok 1, Buda, Marilog District, Davao City
+
+7. Camp Panacan Station Hospital
+   Category: Infirmary/Dispensary
+   Sector: Government
+   Address: Naval Station Felix Apolinario, Panacan, Davao City
+
+8. Camp Quintin M. Merecido Hospital
+   Category: Infirmary/Dispensary
+   Sector: Government
+   Address: Carlos P. Garcia Highway, Camp Catitipan, Buhangin, Davao City
+
+9. City Government of Davao - Marilog District Hospital
+   Category: Infirmary/Dispensary
+   Sector: Government
+   Address: Lower Kibalang, Brgy. Marilog, Marilog District, Davao City
+
+10. City Government of Davao - Paquibato District Hospital
+   Category: Infirmary/Dispensary
+   Sector: Government
+   Address: Paquibato Proper, Paquibato District, Davao City
+
+11. Clinica Isaguirre
+   Category: Infirmary/Dispensary
+   Sector: Private
+   Address: Villafuerte St., Calinan, Davao City
+
+12. Cure Philippines, Inc.
+   Category: Level 1
+   Sector: Private
+   Address: Lanang, J.P. Laurel Avenue, Davao City
+
+13. Davao Doctors Hospital (Clinica Hilario), Inc.
+   Category: Level 3
+   Sector: Private
+   Address: 118 E. Quirino Ave., Davao City
+
+14. Davao Medical School Foundation, Inc.
+   Category: Level 2
+   Sector: Private
+   Address: Dr. A. Gahol Ave., Bajada, Brgy. 19-B, Poblacion District, Davao City
+
+15. Davao Mediquest Hospital, Inc.
+   Category: Level 1
+   Sector: Private
+   Address: McArthur Highway, Brgy. Lizada, Toril, Davao City
+
+16. Dr. Lorenzo B. Principe Clinic & Drugstore, Inc.
+   Category: Infirmary/Dispensary
+   Sector: Private
+   Address: Purok 9, R. Magsaysay Street, Calinan, Davao City
+
+17. Ernesto Guadalupe Community Hospital
+   Category: Level 1
+   Sector: Private
+   Address: Jasmin St., San Nicolas, Daliao, Toril, Davao City
+
+18. Gig Oca Robles Seamen's Hospital
+   Category: Level 2
+   Sector: Private
+   Address: R. Castillo Street, Brgy. Centro Agdao, Davao City
+
+19. Holy Spirit Community Hospital of Davao, Inc.
+   Category: Level 1
+   Sector: Private
+   Address: Sampaguita St., Mintal, Davao City
+
+20. Isaac T. Robillo Hospital Corporation
+   Category: Level 1
+   Sector: Private
+   Address: Km. 26, Davao-Bukidnon Road, Brgy. Calinan, Calinan District, Davao City
+
+21. Lanang Premiere Doctors Hospital, Inc.
+   Category: Level 2
+   Sector: Private
+   Address: DVO Park District, Dakudao Loop, Lanang, San Antonio, Davao City
+
+22. Malta Medical Center, Inc.
+   Category: Level 1
+   Sector: Private
+   Address: Km. 14 McArthur Highway, Toril, Davao City
+
+23. Medical Mission Group Hospital and Health Services Cooperative of Davao
+   Category: Level 1
+   Sector: Private
+   Address: 3rd Ave., Leon Garcia Street, Davao City
+
+24. Metro Davao Medical and Research Center, Inc.
+   Category: Level 2
+   Sector: Private
+   Address: Km. 4, J.P. Laurel Avenue, Brgy. 19-B, Poblacion, Davao City
+
+25. Ricardo Limso Medical Center, Inc.
+   Category: Level 2
+   Sector: Private
+   Address: V. Ilustre St., Davao City
+
+26. San Pedro Hospital of Davao City, Inc.
+   Category: Level 3
+   Sector: Private
+   Address: C. Guzman St., Davao City
+
+27. Specialists' Primary Care of Ilang, Inc.
+   Category: Infirmary/Dispensary
+   Sector: Private
+   Address: Km. 17, Purok 19, Ilang, Bunawan, Davao City
+
+28. St. Felix Medical Hospital
+   Category: Infirmary/Dispensary
+   Sector: Private
+   Address: Catotal Subdivision, Bago Aplaya, Talomo District, Davao City
+
+29. Tibungco Doctors Hospital
+   Category: Infirmary/Dispensary
+   Sector: Private
+   Address: Along National Highway, Brgy. Tibungco, Davao City
+
+30. United Davao Specialists Hospital and Medical Center Inc.
+   Category: Level 2
+   Sector: Private
+   Address: Km. 4 McArthur Highway, Maa, Talomo District, Davao City
+
+31. Viacrucis Infirmary
+   Category: Infirmary/Dispensary
+   Sector: Private
+   Address: Central 1, Binugao, Toril, Davao City
+

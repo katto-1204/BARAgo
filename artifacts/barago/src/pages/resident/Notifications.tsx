@@ -1,12 +1,14 @@
 import { useListNotifications, getListNotificationsQueryKey, useMarkNotificationRead, useMarkAllNotificationsRead } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Calendar, Truck, Info } from "lucide-react";
+import { Bell, Calendar, Truck, Info, ChevronRight } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   appointment: Calendar,
@@ -15,14 +17,17 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  appointment: "bg-primary/10 text-primary border-primary/20",
-  ambulance: "bg-destructive/10 text-destructive border-destructive/20",
-  system: "bg-muted text-muted-foreground border-border",
+  appointment: "bg-green-100 text-green-600 border-green-200",
+  ambulance: "bg-red-100 text-red-600 border-red-200",
+  system: "bg-blue-100 text-blue-600 border-blue-200",
+  reminder: "bg-yellow-100 text-yellow-600 border-yellow-200",
 };
 
 export default function Notifications() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [filter, setFilter] = useState("all");
+
   const { data: notifications, isLoading } = useListNotifications({
     query: { queryKey: getListNotificationsQueryKey() },
   });
@@ -45,6 +50,13 @@ export default function Notifications() {
     });
   };
 
+  const filteredNotifications = notifications?.filter(n => {
+    if (filter === "unread") return !n.isRead;
+    if (filter === "appointment") return n.type === "appointment";
+    if (filter === "ambulance") return n.type === "ambulance";
+    return true;
+  });
+
   const unreadCount = notifications?.filter(n => !n.isRead).length ?? 0;
 
   return (
@@ -53,60 +65,72 @@ export default function Notifications() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Notifications</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-sm">
               {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}` : "All caught up"}
             </p>
           </div>
           {unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={handleMarkAllRead} disabled={markAllReadMutation.isPending} data-testid="button-mark-all-read">
+            <Button variant="ghost" size="sm" onClick={handleMarkAllRead} disabled={markAllReadMutation.isPending} className="text-primary hover:text-primary hover:bg-primary/10">
               Mark all as read
             </Button>
           )}
         </div>
 
+        <Tabs value={filter} onValueChange={setFilter} className="w-full">
+          <TabsList className="bg-transparent h-auto p-0 gap-2 flex-wrap">
+            <TabsTrigger value="all" className="rounded-full px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All</TabsTrigger>
+            <TabsTrigger value="unread" className="rounded-full px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Unread</TabsTrigger>
+            <TabsTrigger value="appointment" className="rounded-full px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Appointment</TabsTrigger>
+            <TabsTrigger value="ambulance" className="rounded-full px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Ambulance</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full" />)}
           </div>
-        ) : (notifications?.length ?? 0) === 0 ? (
-          <Card>
+        ) : (filteredNotifications?.length ?? 0) === 0 ? (
+          <Card className="border-dashed">
             <CardContent className="py-12 text-center">
               <Bell className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-40" />
-              <p className="text-muted-foreground">No notifications yet</p>
+              <p className="text-muted-foreground">No notifications found</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
-            {notifications?.map((notif) => {
+          <div className="space-y-3">
+            {filteredNotifications?.map((notif) => {
               const Icon = TYPE_ICONS[notif.type] ?? Bell;
               const colorClass = TYPE_COLORS[notif.type] ?? TYPE_COLORS.system;
               return (
-                <Card
+                <div
                   key={notif.id}
                   data-testid={`card-notification-${notif.id}`}
-                  className={`transition-colors cursor-pointer ${!notif.isRead ? "border-primary/30 bg-primary/5" : ""}`}
+                  className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer bg-card hover:shadow-sm ${!notif.isRead ? "border-primary/20" : "border-border/50"}`}
                   onClick={() => !notif.isRead && handleMarkRead(notif.id)}
                 >
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-full border ${colorClass} flex-shrink-0`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm ${!notif.isRead ? "font-semibold" : "font-medium"}`}>{notif.title}</p>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {!notif.isRead && (
-                              <span className="h-2 w-2 rounded-full bg-primary" data-testid={`unread-dot-${notif.id}`} />
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-0.5">{notif.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{new Date(notif.createdAt).toLocaleString()}</p>
-                      </div>
+                  <div className={`p-2.5 rounded-full border ${colorClass} flex-shrink-0`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className={`text-sm ${!notif.isRead ? "font-bold text-foreground" : "font-semibold text-muted-foreground"}`}>
+                        {notif.title}
+                      </p>
+                      {!notif.isRead && (
+                        <span className="h-2 w-2 rounded-full bg-primary" data-testid={`unread-dot-${notif.id}`} />
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
+                    <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{notif.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
+                    </p>
+                  </div>
+
+                  <div className="flex-shrink-0 self-center">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                  </div>
+                </div>
               );
             })}
           </div>

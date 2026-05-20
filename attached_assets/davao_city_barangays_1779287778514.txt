@@ -1,0 +1,185 @@
+DAVAO CITY BARANGAYS
+Source basis: Philippine Statistics Authority PSGC list for City of Davao, showing 182 barangays as of 31 July 2025.
+
+1. Acacia
+2. Agdao
+3. Alambre
+4. Atan-Awe
+5. Bago Gallera
+6. Bago Oshiro
+7. Baguio
+8. Balengaeng
+9. Baliok
+10. Bangkas Heights
+11. Baracatan
+12. Bato
+13. Bayabas
+14. Biao Escuela
+15. Biao Guianga
+16. Biao Joaquin
+17. Binugao
+18. Bucana
+19. Buhangin
+20. Bunawan
+21. Cabantian
+22. Cadalian
+23. Calinan
+24. Callawa
+25. Camansi
+26. Carmen
+27. Catalunan Grande
+28. Catalunan Pequeño
+29. Catigan
+30. Cawayan
+31. Colosas
+32. Communal
+33. Crossing Bayabas
+34. Dacudao
+35. Dalag
+36. Dalagdag
+37. Daliao
+38. Daliaon Plantation
+39. Dominga
+40. Dumoy
+41. Eden
+42. Fatima
+43. Gatungan
+44. Gumalang
+45. Ilang
+46. Indangan
+47. Kilate
+48. Lacson
+49. Lamanan
+50. Lampianao
+51. Langub
+52. Alejandra Navarro
+53. Lizada
+54. Los Amigos
+55. Lubogan
+56. Lumiad
+57. Ma-a
+58. Mabuhay
+59. Magtuod
+60. Mahayag
+61. Malabog
+62. Malagos
+63. Malamba
+64. Manambulan
+65. Mandug
+66. Manuel Guianga
+67. Mapula
+68. Marapangi
+69. Marilog
+70. Matina Aplaya
+71. Matina Crossing
+72. Matina Pangi
+73. Matina Biao
+74. Mintal
+75. Mudiang
+76. Mulig
+77. New Carmen
+78. New Valencia
+79. Pampanga
+80. Panacan
+81. Panalum
+82. Pandaitan
+83. Pangyan
+84. Paquibato
+85. Paradise Embak
+86. Riverside
+87. Salapawan
+88. Salaysay
+89. San Isidro
+90. Sasa
+91. Sibulan
+92. Sirawan
+93. Sirib
+94. Suawan
+95. Subasta
+96. Sumimao
+97. Tacunan
+98. Tagakpan
+99. Tagluno
+100. Tagurano
+101. Talandang
+102. Talomo
+103. Talomo River
+104. Tamayong
+105. Tambobong
+106. Tamugan
+107. Tapak
+108. Tawan-tawan
+109. Tibuloy
+110. Tibungco
+111. Tigatto
+112. Toril
+113. Tugbok
+114. Tungakalan
+115. Ula
+116. Wangan
+117. Wines
+118. Barangay 1-A
+119. Barangay 2-A
+120. Barangay 3-A
+121. Barangay 4-A
+122. Barangay 5-A
+123. Barangay 6-A
+124. Barangay 7-A
+125. Barangay 8-A
+126. Barangay 9-A
+127. Barangay 10-A
+128. Barangay 11-B
+129. Barangay 12-B
+130. Barangay 13-B
+131. Barangay 14-B
+132. Barangay 15-B
+133. Barangay 16-B
+134. Barangay 17-B
+135. Barangay 18-B
+136. Barangay 19-B
+137. Barangay 20-B
+138. Barangay 21-C
+139. Barangay 22-C
+140. Barangay 23-C
+141. Barangay 24-C
+142. Barangay 25-C
+143. Barangay 26-C
+144. Barangay 27-C
+145. Barangay 28-C
+146. Barangay 29-C
+147. Barangay 30-C
+148. Barangay 31-D
+149. Barangay 32-D
+150. Barangay 33-D
+151. Barangay 34-D
+152. Barangay 35-D
+153. Barangay 36-D
+154. Barangay 37-D
+155. Barangay 38-D
+156. Barangay 39-D
+157. Barangay 40-D
+158. Angalan
+159. Baganihan
+160. Bago Aplaya
+161. Bantol
+162. Buda
+163. Centro
+164. Datu Salumay
+165. Gov. Paciano Bangoy
+166. Gov. Vicente Duterte
+167. Gumitan
+168. Inayangan
+169. Kap. Tomas Monteverde, Sr.
+170. Lapu-lapu
+171. Leon Garcia, Sr.
+172. Magsaysay
+173. Megkawayan
+174. Rafael Castillo
+175. Saloy
+176. San Antonio
+177. Santo Niño
+178. Ubalde
+179. Waan
+180. Wilfredo Aquino
+181. Alfonso Angliongto Sr.
+182. Vicente Hizon Sr.

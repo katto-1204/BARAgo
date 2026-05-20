@@ -16,6 +16,7 @@ import NewAppointment from "@/pages/resident/NewAppointment";
 import AmbulanceRequests from "@/pages/resident/AmbulanceRequests";
 import NewAmbulance from "@/pages/resident/NewAmbulance";
 import Notifications from "@/pages/resident/Notifications";
+import Profile from "@/pages/resident/Profile";
 
 import AdminDashboard from "@/pages/admin/Dashboard";
 import ManageAppointments from "@/pages/admin/ManageAppointments";
@@ -76,6 +77,9 @@ function Router() {
       </Route>
       <Route path="/notifications">
         {() => <ProtectedRoute component={Notifications} allowedRoles={["resident"]} />}
+      </Route>
+      <Route path="/profile">
+        {() => <ProtectedRoute component={Profile} allowedRoles={["resident"]} />}
       </Route>
 
       {/* Admin routes */}

@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build -w @workspace/barago",
+  "outputDirectory": "artifacts/public",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

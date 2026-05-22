@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build -w @workspace/barago",
-  "outputDirectory": "artifacts/public",
+  "buildCommand": "npm run build -w @workspace/barago && node scripts/prepare-vercel-output.mjs",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/(.*)",

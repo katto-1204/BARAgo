@@ -6,13 +6,9 @@ export interface SessionUser {
   residentId?: string;
 }
 
-declare global {
-  namespace Express {
-    interface Request {
-      session: {
-        user?: SessionUser;
-      };
-    }
+declare module "express-session" {
+  interface SessionData {
+    user?: SessionUser;
   }
 }
 

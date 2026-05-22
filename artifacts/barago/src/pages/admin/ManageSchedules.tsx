@@ -65,8 +65,8 @@ function WorkerCombobox({
     : workers;
 
   const handleSelect = (worker: HealthWorker) => {
-    setQuery(worker.fullName);
-    onChange(worker.fullName);
+    setQuery(worker.email);
+    onChange(worker.email);
     setOpen(false);
   };
 
@@ -96,7 +96,7 @@ function WorkerCombobox({
           value={query}
           onChange={handleInput}
           onFocus={() => setOpen(true)}
-          placeholder="Search or type staff name..."
+          placeholder="Search or type worker email..."
           className="pl-9"
           autoComplete="off"
           data-testid="input-assigned-staff"
@@ -105,7 +105,7 @@ function WorkerCombobox({
       {open && filtered.length > 0 && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
           {filtered.map((worker) => {
-            const isSelected = query === worker.fullName;
+            const isSelected = query === worker.email;
             return (
               <button
                 key={worker.id}
@@ -269,7 +269,9 @@ export default function ManageSchedules() {
                         {sched.assignedStaff ? (
                           <span className="flex items-center gap-1.5">
                             <span className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[9px] font-bold shrink-0">
-                              {sched.assignedStaff.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                              {sched.assignedStaff.includes("@")
+                                ? sched.assignedStaff[0].toUpperCase()
+                                : sched.assignedStaff.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                             </span>
                             {sched.assignedStaff}
                           </span>

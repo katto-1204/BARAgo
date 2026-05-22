@@ -51,10 +51,9 @@ router.get("/appointments", requireAuthMiddleware, async (req, res): Promise<voi
 
 router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<void> => {
   const sessionUser = req.session.user!;
-  if (!sessionUser.residentId) {
-    res.status(400).json({ error: "No resident profile found" });
-    return;
-  }
+  const residentId = sessionUser.role === "admin"
+    ? typeof req.body.residentId === "string" ? req.body.residentId : null
+    : sessionUser.residentId;
 
   const parsed = CreateAppointmentBody.safeParse(req.body);
   if (!parsed.success) {
@@ -62,8 +61,19 @@ router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<vo
     return;
   }
 
+  if (!residentId) {
+    res.status(400).json({ error: "No resident profile found" });
+    return;
+  }
+
+  const [resident] = await db.select().from(residentsTable).where(eq(residentsTable.id, residentId));
+  if (!resident) {
+    res.status(404).json({ error: "Resident not found" });
+    return;
+  }
+
   const [appointment] = await db.insert(appointmentsTable).values({
-    residentId: sessionUser.residentId,
+    residentId,
     patientName: parsed.data.patientName,
     patientAge: parsed.data.patientAge ?? null,
     reason: parsed.data.reason,

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useListAppointments, getListAppointmentsQueryKey, useUpdateAppointment } from "@workspace/api-client-react";
+import { useCreateAppointment, useListAppointments, getListAppointmentsQueryKey, useListResidents, getListResidentsQueryKey, useUpdateAppointment } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/StatusBadges";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Search, Filter, Check, X, Eye, ChevronDown, ChevronUp, Clock, Clipboard, MapPin } from "lucide-react";
+import { Calendar, Search, Filter, Check, X, Eye, ChevronDown, ChevronUp, Clock, Clipboard, MapPin, Plus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -22,11 +22,31 @@ type ActionDialog = {
   patientName: string;
 };
 
+type CreateAppointmentForm = {
+  residentId: string;
+  patientName: string;
+  patientAge: string;
+  reason: string;
+  preferredDate: string;
+  preferredTime: string;
+};
+
+const DEFAULT_CREATE_FORM: CreateAppointmentForm = {
+  residentId: "",
+  patientName: "",
+  patientAge: "",
+  reason: "",
+  preferredDate: "",
+  preferredTime: "morning",
+};
+
 export default function ManageAppointments() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dialog, setDialog] = useState<ActionDialog | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateAppointmentForm>(DEFAULT_CREATE_FORM);
   const [remarks, setRemarks] = useState("");
   const [reschedDate, setReschedDate] = useState("");
   const [reschedTime, setReschedTime] = useState("");
@@ -36,8 +56,12 @@ export default function ManageAppointments() {
   const { data: appointments, isLoading } = useListAppointments({}, {
     query: { queryKey: getListAppointmentsQueryKey({}) },
   });
+  const { data: residents = [] } = useListResidents({}, {
+    query: { queryKey: getListResidentsQueryKey({}) },
+  });
 
   const updateMutation = useUpdateAppointment();
+  const createMutation = useCreateAppointment();
 
   const filteredAppointments = useMemo(() => {
     if (!appointments) return [];
@@ -94,12 +118,54 @@ export default function ManageAppointments() {
     setDialog({ type, appointmentId: id, patientName: name });
   };
 
+  const handleResidentSelect = (residentId: string) => {
+    const selected = residents.find((resident) => resident.id === residentId);
+    setCreateForm((current) => ({
+      ...current,
+      residentId,
+      patientName: selected?.user?.fullName ?? current.patientName,
+      patientAge: selected?.age ? String(selected.age) : current.patientAge,
+    }));
+  };
+
+  const handleCreateAppointment = () => {
+    if (!createForm.residentId || !createForm.patientName || !createForm.reason || !createForm.preferredDate || !createForm.preferredTime) {
+      toast({ title: "Complete the appointment details", variant: "destructive" });
+      return;
+    }
+
+    createMutation.mutate({
+      data: {
+        residentId: createForm.residentId,
+        patientName: createForm.patientName,
+        patientAge: createForm.patientAge ? Number(createForm.patientAge) : undefined,
+        reason: createForm.reason,
+        preferredDate: createForm.preferredDate,
+        preferredTime: createForm.preferredTime,
+      } as any,
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        toast({ title: "Appointment created" });
+        setShowCreateDialog(false);
+        setCreateForm(DEFAULT_CREATE_FORM);
+      },
+      onError: () => toast({ title: "Failed to create appointment", variant: "destructive" }),
+    });
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold font-heading">Manage Appointments</h1>
-          <p className="text-muted-foreground mt-1">Review and act on appointment requests</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold font-heading">Manage Appointments</h1>
+            <p className="text-muted-foreground mt-1">Review, create, and act on appointment requests</p>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)} className="bg-green-600 hover:bg-green-700 gap-2">
+            <Plus className="h-4 w-4" />
+            Create Appointment
+          </Button>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -328,6 +394,67 @@ export default function ManageAppointments() {
             <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
             <Button onClick={handleAction} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Processing..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Create Appointment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Resident</Label>
+              <Select value={createForm.residentId} onValueChange={handleResidentSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select resident" />
+                </SelectTrigger>
+                <SelectContent>
+                  {residents.map((resident) => (
+                    <SelectItem key={resident.id} value={resident.id}>
+                      {resident.user?.fullName ?? "Unnamed Resident"} - {resident.user?.email ?? "No email"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Patient Name</Label>
+                <Input value={createForm.patientName} onChange={(e) => setCreateForm((f) => ({ ...f, patientName: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Patient Age</Label>
+                <Input type="number" value={createForm.patientAge} onChange={(e) => setCreateForm((f) => ({ ...f, patientAge: e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Reason</Label>
+              <Textarea value={createForm.reason} onChange={(e) => setCreateForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Describe the appointment reason..." />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Preferred Date</Label>
+                <Input type="date" value={createForm.preferredDate} onChange={(e) => setCreateForm((f) => ({ ...f, preferredDate: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Preferred Time</Label>
+                <Select value={createForm.preferredTime} onValueChange={(value) => setCreateForm((f) => ({ ...f, preferredTime: value }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="morning">Morning (8 AM - 12 PM)</SelectItem>
+                    <SelectItem value="afternoon">Afternoon (1 PM - 5 PM)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateAppointment} disabled={createMutation.isPending} className="bg-green-600 hover:bg-green-700">
+              {createMutation.isPending ? "Creating..." : "Create Appointment"}
             </Button>
           </DialogFooter>
         </DialogContent>

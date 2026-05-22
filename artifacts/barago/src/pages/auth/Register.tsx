@@ -19,10 +19,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Mail, Lock, Eye, EyeOff, Calendar, Phone, MapPin, Shield, User, Check, ChevronsUpDown } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Calendar, Phone, MapPin, Shield, User, Check, ChevronsUpDown, ArrowRight, HeartPulse, Stethoscope, Sparkles, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { DAVAO_BARANGAYS } from "@/lib/barangays";
+import { useTheme } from "next-themes";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -49,6 +50,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [age, setAge] = useState<number | null>(null);
+  const { theme, setTheme } = useTheme();
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -107,39 +109,97 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="p-4 flex justify-center items-center bg-white border-b">
-        <Link href="/" className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-primary" />
-          <span className="font-extrabold text-xl tracking-tight text-foreground">
-            Bara<span className="text-primary">Go</span>
+    <div className="min-h-screen flex flex-col bg-background relative overflow-hidden font-sans selection:bg-primary/20">
+      <div className="absolute top-[-18%] left-[-12%] w-[48%] h-[48%] rounded-full bg-gradient-to-tr from-primary/10 via-emerald-500/5 to-transparent blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-teal-400/10 via-blue-500/5 to-transparent blur-[120px] pointer-events-none" />
+
+      <header className="h-16 border-b border-border/40 bg-background/60 backdrop-blur-xl flex items-center justify-between px-6 z-10 sticky top-0">
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-primary via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-primary/15 transition-transform group-hover:scale-105 duration-300">
+            <Stethoscope className="h-4.5 w-4.5 text-white" />
+          </div>
+          <span className="text-xl font-black bg-gradient-to-r from-primary via-emerald-500 to-teal-400 bg-clip-text text-transparent tracking-tight">
+            Bara<span className="text-foreground group-hover:text-primary transition-colors">Go</span>
           </span>
         </Link>
+        <button
+          type="button"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="h-9.5 w-9.5 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted border border-border/30 hover:border-border/80 transition-all duration-300 shadow-sm"
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-4 py-8">
-        <div className="w-full max-w-lg">
-          <Card className="border-none shadow-xl rounded-2xl overflow-hidden">
-            <CardContent className="p-8">
-              <div className="flex flex-col items-center gap-1 mb-7">
-                <h1 className="text-2xl font-bold text-slate-900">Create Account</h1>
-                <p className="text-sm text-slate-500 text-center">
-                  Register as a barangay resident to access health services.
-                </p>
+      <main className="flex-1 flex z-10">
+        <div className="hidden xl:flex w-[38%] bg-gradient-to-br from-primary/95 via-emerald-500/90 to-teal-400/95 flex-col justify-between p-12 2xl:p-16 relative overflow-hidden border-r border-border/10">
+          <div className="absolute top-[-10%] right-[-10%] w-80 h-80 bg-white/10 rounded-full blur-[80px]" />
+          <div className="absolute bottom-[-15%] left-[-10%] w-80 h-80 bg-white/5 rounded-full blur-[80px]" />
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-8 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 w-fit shadow-sm">
+              <Sparkles className="h-4 w-4 text-white" />
+              <span className="text-[10px] text-white font-extrabold uppercase tracking-wider">Resident Enrollment</span>
+            </div>
+            <h2 className="text-5xl font-black text-white leading-tight tracking-tight mb-4">
+              Start your<br />care journey.
+            </h2>
+            <p className="text-white/85 text-lg font-medium leading-relaxed max-w-sm">
+              Create a secure resident profile for appointments, ambulance requests, and barangay health updates.
+            </p>
+          </div>
+
+          <div className="relative z-10 space-y-6">
+            {[
+              "Submit complete resident details once",
+              "Book checkups with barangay health schedules",
+              "Receive updates from the healthcare team",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-4">
+                <div className="h-9 w-9 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shrink-0 shadow-md">
+                  <ArrowRight className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-white/95">{item}</span>
               </div>
+            ))}
+            <div className="pt-8 border-t border-white/15 flex justify-between items-center text-white/80 text-xs">
+              <div className="flex items-center gap-1.5 font-semibold">
+                <Shield className="h-4 w-4 text-white" /> SECURE REGISTRATION
+              </div>
+              <p className="italic">Healthier communities</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10">
+          <div className="w-full max-w-3xl space-y-6">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary">
+                <HeartPulse className="h-3.5 w-3.5" />
+                Resident Portal
+              </div>
+              <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Create Account</h1>
+              <p className="text-sm text-muted-foreground font-medium">
+                Register as a barangay resident to access healthcare scheduling and emergency assistance.
+              </p>
+            </div>
+
+            <Card className="backdrop-blur-xl bg-card/75 border border-border/40 rounded-3xl shadow-2xl shadow-primary/5 overflow-hidden">
+            <CardContent className="p-6 sm:p-8">
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                   <FormField
                     control={form.control}
                     name="fullName"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Full Name</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input placeholder="Juan Dela Cruz" autoComplete="name" className="pl-9 bg-slate-50 border-slate-200" {...field} />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                            <Input placeholder="Juan Dela Cruz" autoComplete="name" className="pl-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -147,17 +207,17 @@ export default function Register() {
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="birthdate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Birthdate</FormLabel>
+                          <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Birthdate</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                              <Input type="date" className="pl-9 bg-slate-50 border-slate-200" {...field} />
+                              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                              <Input type="date" className="pl-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -173,21 +233,21 @@ export default function Register() {
                         value={age ?? ""}
                         readOnly
                         placeholder="Auto-calculated"
-                        className="bg-slate-100 border-slate-200 cursor-not-allowed text-slate-500"
+                        className="h-11.5 bg-muted/50 border-border/50 cursor-not-allowed rounded-2xl text-muted-foreground font-medium"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Gender</FormLabel>
+                          <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Gender</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-slate-50 border-slate-200">
+                              <SelectTrigger className="h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300">
                                 <SelectValue placeholder="Select" />
                               </SelectTrigger>
                             </FormControl>
@@ -206,11 +266,11 @@ export default function Register() {
                       name="contactNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contact Number</FormLabel>
+                          <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Contact Number</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                              <Input placeholder="09123456789" autoComplete="tel" className="pl-9 bg-slate-50 border-slate-200" {...field} />
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                              <Input placeholder="09123456789" autoComplete="tel" className="pl-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -224,7 +284,7 @@ export default function Register() {
                     name="barangay"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Barangay (Davao City)</FormLabel>
+                        <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Barangay (Davao City)</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -232,7 +292,7 @@ export default function Register() {
                                 variant="outline"
                                 role="combobox"
                                 className={cn(
-                                  "w-full justify-between bg-slate-50 border-slate-200 font-normal",
+                                  "w-full h-11.5 justify-between bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl font-medium",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -281,11 +341,11 @@ export default function Register() {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Street Address / House No.</FormLabel>
+                        <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Street Address / House No.</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input placeholder="123 Rizal St, Purok 4" autoComplete="street-address" className="pl-9 bg-slate-50 border-slate-200" {...field} />
+                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                            <Input placeholder="123 Rizal St, Purok 4" autoComplete="street-address" className="pl-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -298,11 +358,11 @@ export default function Register() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Email Address</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input type="email" placeholder="juan@example.com" autoComplete="email" className="pl-9 bg-slate-50 border-slate-200" {...field} />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                            <Input type="email" placeholder="juan@example.com" autoComplete="email" className="pl-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -310,27 +370,27 @@ export default function Register() {
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Password</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
                               <Input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Min 6 characters"
                                 autoComplete="new-password"
-                                className="pl-9 pr-9 bg-slate-50 border-slate-200"
+                                className="pl-10 pr-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium"
                                 {...field}
                               />
                               <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                               >
                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                               </button>
@@ -345,21 +405,21 @@ export default function Register() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
+                          <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Confirm Password</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
                               <Input
                                 type={showConfirmPassword ? "text" : "password"}
                                 placeholder="Repeat password"
                                 autoComplete="new-password"
-                                className="pl-9 pr-9 bg-slate-50 border-slate-200"
+                                className="pl-10 pr-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium"
                                 {...field}
                               />
                               <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                               >
                                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                               </button>
@@ -375,12 +435,12 @@ export default function Register() {
                     control={form.control}
                     name="terms"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl border border-border/40 bg-muted/20 p-4">
                         <FormControl>
                           <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm text-slate-600 font-normal cursor-pointer">
+                          <FormLabel className="text-sm text-muted-foreground font-medium cursor-pointer leading-relaxed">
                             I agree to the{" "}
                             <Link href="/terms" className="text-[#2563EB] hover:underline font-medium">Terms and Conditions</Link>
                             {" "}and{" "}
@@ -394,7 +454,7 @@ export default function Register() {
 
                   <Button
                     type="submit"
-                    className="w-full h-11 font-semibold bg-primary hover:bg-primary/90 mt-1"
+                    className="w-full h-11.5 font-bold rounded-2xl bg-gradient-to-r from-primary via-emerald-500 to-teal-400 hover:opacity-95 text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 gap-2 text-sm"
                     disabled={registerMutation.isPending}
                   >
                     {registerMutation.isPending ? (
@@ -403,30 +463,33 @@ export default function Register() {
                         Creating account...
                       </span>
                     ) : (
-                      "Create Account"
+                      <span className="flex items-center gap-2">
+                        <User className="h-4 w-4" /> Create Resident Account
+                      </span>
                     )}
                   </Button>
                 </form>
               </Form>
 
-              <p className="mt-5 text-center text-sm text-slate-600">
+              <p className="mt-6 text-center text-sm text-muted-foreground font-medium">
                 Already have an account?{" "}
-                <Link href="/login" className="font-semibold text-[#2563EB] hover:underline">
+                <Link href="/login" className="font-bold text-primary hover:underline">
                   Log In
                 </Link>
               </p>
             </CardContent>
           </Card>
+          </div>
         </div>
       </main>
 
-      <footer className="bg-[#2563EB] text-white py-4 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-center">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            <p className="font-semibold uppercase tracking-wide text-xs">BaraGo Barangay Healthcare Scheduling System</p>
+      <footer className="border-t border-border/40 bg-card/30 backdrop-blur-md py-4.5 px-6 z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Shield className="h-4 w-4 text-primary" />
+            <p className="font-bold text-xs uppercase tracking-wider">BaraGo Medical Coordination Platform</p>
           </div>
-          <p className="text-xs opacity-90 italic">"Improving lives. Building healthier communities."</p>
+          <p className="text-xs text-muted-foreground/80 font-medium italic">"Improving lives. Building healthier, safer communities together."</p>
         </div>
       </footer>
     </div>

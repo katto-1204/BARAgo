@@ -20,9 +20,10 @@ export default function WorkerProfile() {
     .toUpperCase() || "HW";
 
   // Find schedules assigned to this health worker
-  const mySchedules = schedules?.filter(
-    (s) => s.assignedStaff === user?.fullName
-  ) ?? [];
+  const mySchedules = schedules?.filter((schedule) => {
+    const assignedStaff = schedule.assignedStaff?.toLowerCase();
+    return assignedStaff === user?.email?.toLowerCase() || assignedStaff === user?.fullName?.toLowerCase();
+  }) ?? [];
 
   const upcomingSchedules = mySchedules.filter((s) => {
     const today = new Date().toISOString().split("T")[0];

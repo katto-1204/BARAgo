@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListAppointments, getListAppointmentsQueryKey, useUpdateAppointment } from "@workspace/api-client-react";
+import { useListAppointments, getListAppointmentsQueryKey, useListSchedules, getListSchedulesQueryKey, useUpdateAppointment } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { Calendar, CheckCircle2, Clock, User, ClipboardList, Search, Filter, Map
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth";
 
 export default function HealthWorkerDashboard() {
   const [filterTab, setFilterTab] = useState("today");
@@ -22,11 +23,15 @@ export default function HealthWorkerDashboard() {
   const [remarks, setRemarks] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Get appointments based on filter tab
   const statusParam = filterTab === "completed" ? "completed" : "approved";
   const { data: appointments, isLoading } = useListAppointments({ status: statusParam as any }, {
     query: { queryKey: getListAppointmentsQueryKey({ status: statusParam as any }) },
+  });
+  const { data: schedules } = useListSchedules({}, {
+    query: { queryKey: getListSchedulesQueryKey() },
   });
 
   const updateMutation = useUpdateAppointment();
@@ -49,18 +54,24 @@ export default function HealthWorkerDashboard() {
   };
 
   const todayStr = new Date().toISOString().split('T')[0];
+  const mySchedules = schedules?.filter((schedule) => {
+    const assignedStaff = schedule.assignedStaff?.toLowerCase();
+    return assignedStaff === user?.email?.toLowerCase() || assignedStaff === user?.fullName?.toLowerCase();
+  }) ?? [];
+  const myScheduleDates = new Set(mySchedules.map((schedule) => schedule.scheduleDate));
   
   const filteredAppointments = appointments?.filter(appt => {
     const matchesSearch = appt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           appt.reason.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesAssignedSchedule = !appt.preferredDate || myScheduleDates.size === 0 || myScheduleDates.has(appt.preferredDate);
     
     if (filterTab === "today") {
-      return matchesSearch && appt.preferredDate === todayStr;
+      return matchesSearch && matchesAssignedSchedule && appt.preferredDate === todayStr;
     }
     if (filterTab === "upcoming") {
-      return matchesSearch && !!appt.preferredDate && appt.preferredDate > todayStr;
+      return matchesSearch && matchesAssignedSchedule && !!appt.preferredDate && appt.preferredDate > todayStr;
     }
-    return matchesSearch;
+    return matchesSearch && matchesAssignedSchedule;
   });
 
   return (
@@ -70,6 +81,26 @@ export default function HealthWorkerDashboard() {
           <h1 className="text-2xl font-bold tracking-tight">Health Worker Dashboard</h1>
           <p className="text-muted-foreground">Manage approved checkups and record consultation remarks.</p>
         </div>
+
+        {mySchedules.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {mySchedules.slice(0, 3).map((schedule) => (
+              <Card key={schedule.id} className="border-l-4 border-l-primary bg-primary/5">
+                <CardContent className="p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary">Assigned Schedule</p>
+                  <div className="mt-2 flex items-center gap-2 text-sm font-semibold">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span>{schedule.scheduleDate}</span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{schedule.startTime} - {schedule.endTime}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <Tabs value={filterTab} onValueChange={setFilterTab} className="w-full md:w-auto">
@@ -201,4 +232,3 @@ export default function HealthWorkerDashboard() {
     </AppLayout>
   );
 }
-

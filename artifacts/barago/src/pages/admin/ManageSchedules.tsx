@@ -25,6 +25,14 @@ const STATUS_COLORS: Record<string, string> = {
 
 type HealthWorker = { id: string; fullName: string; email: string; role: string; status: string };
 
+const DEFAULT_HEALTH_WORKER: HealthWorker = {
+  id: "default-worker",
+  fullName: "Health Worker",
+  email: "worker@barago.ph",
+  role: "health_worker",
+  status: "active",
+};
+
 // Custom hook: fetch health workers via the new /api/users endpoint
 function useHealthWorkers() {
   return useQuery<HealthWorker[]>({
@@ -151,7 +159,10 @@ export default function ManageSchedules() {
     query: { queryKey: getListSchedulesQueryKey() },
   });
 
-  const { data: healthWorkers = [] } = useHealthWorkers();
+  const { data: fetchedHealthWorkers = [] } = useHealthWorkers();
+  const healthWorkers = fetchedHealthWorkers.some((worker) => worker.email === DEFAULT_HEALTH_WORKER.email)
+    ? fetchedHealthWorkers
+    : [DEFAULT_HEALTH_WORKER, ...fetchedHealthWorkers];
 
   const createMutation = useCreateSchedule();
   const updateMutation = useUpdateSchedule();

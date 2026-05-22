@@ -4,12 +4,12 @@ A full-stack barangay healthcare scheduling management system. Residents can reg
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080, proxied at `/api`)
-- `pnpm --filter @workspace/barago run dev` — run the frontend (proxied at `/`)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `npm run dev -w @workspace/api-server` — run the API server (port 8080, proxied at `/api`)
+- `npm run dev -w @workspace/barago` — run the frontend (proxied at `/`)
+- `npm run typecheck` — full typecheck across all packages
+- `npm run build` — typecheck + build all packages
+- `npm run codegen -w @workspace/api-spec` — regenerate API hooks and Zod schemas from the OpenAPI spec
+- `npm run push -w @workspace/db` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string, `SESSION_SECRET` — express-session secret
 
 ## Seed Accounts (all use password: `admin123`)
@@ -22,7 +22,7 @@ A full-stack barangay healthcare scheduling management system. Residents can reg
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
+- npm workspaces, Node.js 24, TypeScript 5.9
 - Frontend: React 19 + Vite + TailwindCSS + shadcn/ui + Wouter + TanStack Query
 - API: Express 5 + express-session
 - DB: PostgreSQL + Drizzle ORM
@@ -74,10 +74,10 @@ A full-stack barangay healthcare scheduling management system. Residents can reg
 ## Gotchas
 
 - Always use `req.session.user = {...}` NOT `req.session = {...}` — replacing the session object loses the `touch()` method and crashes express-session
-- Run `pnpm --filter @workspace/api-spec run codegen` after any OpenAPI spec change before editing frontend or backend
-- `pnpm --filter @workspace/db run push` must be run after schema changes (dev only, not production)
+- Run `npm run codegen -w @workspace/api-spec` after any OpenAPI spec change before editing frontend or backend
+- `npm run push -w @workspace/db` must be run after schema changes (dev only, not production)
 - The shared proxy routes `/api` to the API server and `/` to the frontend; never hard-code ports in app code
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See the `npm-workspace` details for workspace structure, TypeScript setup, and package details

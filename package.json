@@ -3,14 +3,15 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently -k \"pnpm --filter @workspace/barago run dev\" \"pnpm --filter @workspace/api-server run dev\"",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "dev": "concurrently -k \"npm run dev -w @workspace/barago\" \"npm run dev -w @workspace/api-server\"",
+    "build": "npm run typecheck && npm run build --workspaces --if-present",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "npm run typecheck:libs && npm run typecheck --workspaces --if-present"
   },
   "private": true,
   "workspaces": [
-    "artifacts/*",
+    "artifacts/api-server",
+    "artifacts/barago",
     "lib/*",
     "lib/integrations/*",
     "scripts"

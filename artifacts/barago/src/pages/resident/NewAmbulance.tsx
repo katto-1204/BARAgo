@@ -13,7 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, AlertTriangle, User, MapPin, Phone, Info, Ambulance } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { ArrowLeft, AlertTriangle, User, MapPin, Phone, Info, Ambulance, Check, ChevronsUpDown } from "lucide-react";
 import { DAVAO_BARANGAYS } from "@/lib/barangays";
 import { findNearestHospitals } from "@/lib/nearestHospital";
 import { cn } from "@/lib/utils";
@@ -156,20 +158,54 @@ export default function NewAmbulance() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField control={form.control} name="barangay" render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Barangay</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-barangay">
-                            <SelectValue placeholder="Select barangay" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {DAVAO_BARANGAYS.map(b => (
-                            <SelectItem key={b} value={b}>{b}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? DAVAO_BARANGAYS.find((b) => b === field.value)
+                                : "Select barangay..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0 max-h-[300px] overflow-y-auto">
+                          <Command>
+                            <CommandInput placeholder="Search barangay..." />
+                            <CommandList>
+                              <CommandEmpty>No barangay found.</CommandEmpty>
+                              <CommandGroup>
+                                {DAVAO_BARANGAYS.map((b) => (
+                                  <CommandItem
+                                    value={b}
+                                    key={b}
+                                    onSelect={() => {
+                                      form.setValue("barangay", b);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        b === field.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {b}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )} />

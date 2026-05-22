@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import NotFound from "@/pages/not-found";
+import { ThemeProvider } from "next-themes";
 
 import Landing from "@/pages/public/Landing";
 import Login from "@/pages/auth/Login";
@@ -26,6 +27,7 @@ import ManageResidents from "@/pages/admin/ManageResidents";
 import Reports from "@/pages/admin/Reports";
 
 import HealthWorkerDashboard from "@/pages/health-worker/HealthWorkerDashboard";
+import WorkerProfile from "@/pages/health-worker/WorkerProfile";
 
 function ProtectedRoute({ component: Component, allowedRoles }: { component: ComponentType; allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
@@ -106,6 +108,9 @@ function Router() {
       <Route path="/health-worker">
         {() => <ProtectedRoute component={HealthWorkerDashboard} allowedRoles={["health_worker"]} />}
       </Route>
+      <Route path="/health-worker/profile">
+        {() => <ProtectedRoute component={WorkerProfile} allowedRoles={["health_worker"]} />}
+      </Route>
 
       <Route component={NotFound} />
     </Switch>
@@ -116,16 +121,18 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <AuthProvider>
-            <Router />
-          </AuthProvider>
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <AuthProvider>
+              <Router />
+            </AuthProvider>
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

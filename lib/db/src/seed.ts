@@ -1,3 +1,4 @@
+// @ts-ignore
 import bcrypt from "bcryptjs";
 import { db, pool } from "./index";
 import { usersTable, residentsTable } from "./schema";

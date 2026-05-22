@@ -17,7 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Lock, Eye, EyeOff, Calendar, Phone, MapPin, Shield, User } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Mail, Lock, Eye, EyeOff, Calendar, Phone, MapPin, Shield, User, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { DAVAO_BARANGAYS } from "@/lib/barangays";
 import logoPath from "@assets/image_1779289197249.png";
@@ -218,20 +221,54 @@ export default function Register() {
                     control={form.control}
                     name="barangay"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Barangay (Davao City)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="bg-slate-50 border-slate-200">
-                              <SelectValue placeholder="Select your barangay" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="max-h-[260px]">
-                            {DAVAO_BARANGAYS.map((b) => (
-                              <SelectItem key={b} value={b}>{b}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between bg-slate-50 border-slate-200 font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? DAVAO_BARANGAYS.find((b) => b === field.value)
+                                  : "Select your barangay..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0 max-h-[300px] overflow-y-auto">
+                            <Command>
+                              <CommandInput placeholder="Search barangay..." />
+                              <CommandList>
+                                <CommandEmpty>No barangay found.</CommandEmpty>
+                                <CommandGroup>
+                                  {DAVAO_BARANGAYS.map((b) => (
+                                    <CommandItem
+                                      value={b}
+                                      key={b}
+                                      onSelect={() => {
+                                        form.setValue("barangay", b);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          b === field.value ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {b}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}

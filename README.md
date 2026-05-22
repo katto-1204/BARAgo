@@ -4,7 +4,7 @@ BARAgo is a full-stack health appointment management system designed for baranga
 
 ## Overview
 
-The system is organized as a TypeScript monorepo using pnpm workspaces. It includes a React frontend, an Express API server, shared OpenAPI-generated client packages, and a PostgreSQL database layer powered by Drizzle ORM.
+The system is organized as a TypeScript monorepo using npm workspaces. It includes a React frontend, an Express API server, shared OpenAPI-generated client packages, and a PostgreSQL database layer powered by Drizzle ORM.
 
 The application supports three primary user roles:
 
@@ -31,7 +31,7 @@ The application supports three primary user roles:
 - **Backend**: Node.js, Express 5, TypeScript, express-session
 - **Database**: PostgreSQL, Drizzle ORM, drizzle-zod
 - **API Contracts**: OpenAPI, Orval, Zod
-- **Tooling**: pnpm workspaces, TypeScript project references, esbuild
+- **Tooling**: npm workspaces, TypeScript project references, esbuild
 
 ## Project Structure
 
@@ -47,8 +47,7 @@ The application supports three primary user roles:
 │   ├── api-zod/           # Generated Zod schemas
 │   └── db/                # Drizzle schema, database client, and seed script
 ├── scripts/               # Workspace scripts
-├── package.json           # Root workspace scripts
-└── pnpm-workspace.yaml    # Workspace package configuration
+└── package.json           # Root workspace scripts and package configurations
 ```
 
 ## Prerequisites
@@ -56,7 +55,7 @@ The application supports three primary user roles:
 Install the following before running the project:
 
 - Node.js
-- pnpm
+- npm
 - PostgreSQL database
 
 ## Environment Variables
@@ -75,7 +74,7 @@ Create the required environment configuration for local development before runni
 Install all workspace dependencies from the repository root:
 
 ```bash
-pnpm install
+npm install
 ```
 
 ## Database Setup
@@ -83,13 +82,13 @@ pnpm install
 Push the Drizzle schema to the configured PostgreSQL database:
 
 ```bash
-pnpm --filter @workspace/db run push
+npm run push -w @workspace/db
 ```
 
 Seed development data when needed:
 
 ```bash
-pnpm --filter @workspace/db run seed
+npm run seed -w @workspace/db
 ```
 
 ## Development
@@ -97,19 +96,19 @@ pnpm --filter @workspace/db run seed
 Run the frontend and API server together:
 
 ```bash
-pnpm run dev
+npm run dev
 ```
 
 Run the frontend only:
 
 ```bash
-pnpm --filter @workspace/barago run dev
+npm run dev -w @workspace/barago
 ```
 
 Run the API server only:
 
 ```bash
-pnpm --filter @workspace/api-server run dev
+npm run dev -w @workspace/api-server
 ```
 
 ## Build and Validation
@@ -117,19 +116,19 @@ pnpm --filter @workspace/api-server run dev
 Run TypeScript checks across the workspace:
 
 ```bash
-pnpm run typecheck
+npm run typecheck
 ```
 
 Build all packages that provide a build script:
 
 ```bash
-pnpm run build
+npm run build
 ```
 
 Regenerate API clients and validation schemas after OpenAPI changes:
 
 ```bash
-pnpm --filter @workspace/api-spec run codegen
+npm run codegen -w @workspace/api-spec
 ```
 
 ## Main Packages

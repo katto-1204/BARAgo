@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useListSchedules, getListSchedulesQueryKey, useCreateSchedule, useUpdateSchedule, useDeleteSchedule } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Plus, Calendar as CalendarIcon, Users, Edit2, Trash2, ChevronRight, User } from "lucide-react";
+import { Clock, Plus, Calendar as CalendarIcon, Users, Edit2, Trash2, User, Check } from "lucide-react";
 
 type ScheduleForm = { scheduleDate: string; startTime: string; endTime: string; slotLimit: string; assignedStaff: string; status: string };
 const DEFAULT_FORM: ScheduleForm = { scheduleDate: "", startTime: "", endTime: "", slotLimit: "20", assignedStaff: "", status: "open" };
@@ -22,6 +22,123 @@ const STATUS_COLORS: Record<string, string> = {
   closed: "bg-gray-100 text-gray-800 border-gray-200",
   cancelled: "bg-red-100 text-red-800 border-red-200",
 };
+
+type HealthWorker = { id: string; fullName: string; email: string; role: string; status: string };
+
+// Custom hook: fetch health workers via the new /api/users endpoint
+function useHealthWorkers() {
+  return useQuery<HealthWorker[]>({
+    queryKey: ["/api/users", "health_worker"],
+    queryFn: async () => {
+      const res = await fetch("/api/users?role=health_worker", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch health workers");
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+}
+
+// Worker Combobox — autocomplete input with dropdown suggestions
+function WorkerCombobox({
+  value,
+  onChange,
+  workers,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  workers: HealthWorker[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(value);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync external value changes (e.g. when dialog opens for editing)
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
+  const filtered = query.length > 0
+    ? workers.filter((w) =>
+        w.fullName.toLowerCase().includes(query.toLowerCase()) ||
+        w.email.toLowerCase().includes(query.toLowerCase())
+      )
+    : workers;
+
+  const handleSelect = (worker: HealthWorker) => {
+    setQuery(worker.fullName);
+    onChange(worker.fullName);
+    setOpen(false);
+  };
+
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    onChange(e.target.value);
+    setOpen(true);
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <div className="relative">
+        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Input
+          id="staff"
+          value={query}
+          onChange={handleInput}
+          onFocus={() => setOpen(true)}
+          placeholder="Search or type staff name..."
+          className="pl-9"
+          autoComplete="off"
+          data-testid="input-assigned-staff"
+        />
+      </div>
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+          {filtered.map((worker) => {
+            const isSelected = query === worker.fullName;
+            return (
+              <button
+                key={worker.id}
+                type="button"
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted text-left transition-colors"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelect(worker);
+                }}
+              >
+                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                  {worker.fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{worker.fullName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{worker.email}</p>
+                </div>
+                {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {open && filtered.length === 0 && query.length > 0 && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg">
+          <p className="p-3 text-sm text-muted-foreground text-center">
+            No health workers found — "{query}" will be saved as typed.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ManageSchedules() {
   const [showDialog, setShowDialog] = useState(false);
@@ -33,6 +150,8 @@ export default function ManageSchedules() {
   const { data: schedules, isLoading } = useListSchedules({}, {
     query: { queryKey: getListSchedulesQueryKey() },
   });
+
+  const { data: healthWorkers = [] } = useHealthWorkers();
 
   const createMutation = useCreateSchedule();
   const updateMutation = useUpdateSchedule();
@@ -146,7 +265,18 @@ export default function ManageSchedules() {
                     <div className="flex items-center text-sm">
                       <User className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="text-muted-foreground mr-2">Staff:</span>
-                      <span className="font-semibold truncate">{sched.assignedStaff || "Unassigned"}</span>
+                      <span className="font-semibold truncate">
+                        {sched.assignedStaff ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[9px] font-bold shrink-0">
+                              {sched.assignedStaff.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                            </span>
+                            {sched.assignedStaff}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Unassigned</span>
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -182,7 +312,7 @@ export default function ManageSchedules() {
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-primary" />
@@ -225,8 +355,17 @@ export default function ManageSchedules() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="staff">Assigned Staff</Label>
-              <Input id="staff" value={form.assignedStaff} onChange={e => setForm(f => ({...f, assignedStaff: e.target.value}))} placeholder="Doctor, nurse, or health worker name" data-testid="input-assigned-staff" />
+              <Label htmlFor="staff">
+                Assigned Health Worker
+                {healthWorkers.length > 0 && (
+                  <span className="ml-2 text-xs text-muted-foreground font-normal">({healthWorkers.length} available)</span>
+                )}
+              </Label>
+              <WorkerCombobox
+                value={form.assignedStaff}
+                onChange={(v) => setForm(f => ({ ...f, assignedStaff: v }))}
+                workers={healthWorkers}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -240,4 +379,3 @@ export default function ManageSchedules() {
     </AppLayout>
   );
 }
-

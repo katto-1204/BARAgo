@@ -23,7 +23,6 @@ import { Mail, Lock, Eye, EyeOff, Calendar, Phone, MapPin, Shield, User, Check, 
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { DAVAO_BARANGAYS } from "@/lib/barangays";
-import logoPath from "@assets/image_1779289197249.png";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -110,8 +109,11 @@ export default function Register() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="p-4 flex justify-center items-center bg-white border-b">
-        <Link href="/">
-          <img src={logoPath} alt="BaraGo Logo" className="h-10 w-auto object-contain" />
+        <Link href="/" className="flex items-center gap-2">
+          <Shield className="h-6 w-6 text-primary" />
+          <span className="font-extrabold text-xl tracking-tight text-foreground">
+            Bara<span className="text-primary">Go</span>
+          </span>
         </Link>
       </header>
 

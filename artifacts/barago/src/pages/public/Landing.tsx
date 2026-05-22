@@ -5,7 +5,6 @@ import {
   CalendarCheck, Ambulance, Bell, ArrowRight, UserPlus, LogIn,
   Phone, Shield, CheckCircle, Star, ChevronRight, Stethoscope, Heart
 } from "lucide-react";
-import logoPath from "@assets/image_1779289197249.png";
 
 const features = [
   {
@@ -58,10 +57,6 @@ export default function Landing() {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold">
                 <Stethoscope className="h-4 w-4" />
                 Barangay Health Services — Davao City
-              </div>
-
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <img src={logoPath} alt="BaraGo Logo" className="h-20 w-auto drop-shadow-md" />
               </div>
 
               <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground leading-[1.1]">

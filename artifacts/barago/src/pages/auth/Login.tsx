@@ -9,9 +9,8 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Lock, Eye, EyeOff, ArrowRight, Headset, Shield, UserPlus, LogIn, Heart } from "lucide-react";
+import { Lock, Eye, EyeOff, ArrowRight, Headset, Shield, UserPlus, LogIn, Heart, Stethoscope, Sparkles } from "lucide-react";
 import { useState } from "react";
-import logoPath from "@assets/image_1779289197249.png";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
@@ -52,71 +51,99 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background relative overflow-hidden font-sans selection:bg-primary/20">
+      {/* Dynamic Background Mesh Gradients */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-primary/10 via-emerald-500/5 to-transparent blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-teal-400/10 via-blue-500/5 to-transparent blur-[120px] pointer-events-none" />
+
       {/* Header */}
-      <header className="h-16 border-b border-border/60 bg-card/80 backdrop-blur-md flex items-center justify-between px-6">
-        <Link href="/">
-          <img src={logoPath} alt="BaraGo Logo" className="h-9 w-auto object-contain" />
+      <header className="h-16 border-b border-border/40 bg-background/60 backdrop-blur-xl flex items-center justify-between px-6 z-10 sticky top-0">
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-primary via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-primary/15 transition-transform group-hover:scale-105 duration-300">
+            <Stethoscope className="h-4.5 w-4.5 text-white" />
+          </div>
+          <span className="text-xl font-black bg-gradient-to-r from-primary via-emerald-500 to-teal-400 bg-clip-text text-transparent tracking-tight">
+            Bara<span className="text-foreground group-hover:text-primary transition-colors">Go</span>
+          </span>
         </Link>
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="h-9 w-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="h-9.5 w-9.5 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted border border-border/30 hover:border-border/80 transition-all duration-300 shadow-sm"
         >
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
       </header>
 
-      <main className="flex-1 flex">
+      <main className="flex-1 flex z-10">
         {/* Left Decorative Panel — hidden on mobile */}
-        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary via-emerald-500 to-teal-400 flex-col items-center justify-center p-12 relative overflow-hidden">
-          <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-          <div className="relative z-10 text-center text-white">
-            <Heart className="h-20 w-20 mx-auto mb-6 opacity-90" />
-            <h2 className="text-4xl font-extrabold mb-4 tracking-tight">BaraGo</h2>
-            <p className="text-xl font-medium text-white/90 max-w-xs leading-relaxed">
-              Your trusted barangay health companion.
+        <div className="hidden lg:flex w-[45%] bg-gradient-to-br from-primary/95 via-emerald-500/90 to-teal-400/95 flex-col justify-between p-16 relative overflow-hidden border-r border-border/10">
+          <div className="absolute top-[-10%] right-[-10%] w-80 h-80 bg-white/10 rounded-full blur-[80px]" />
+          <div className="absolute bottom-[-15%] left-[-10%] w-80 h-80 bg-white/5 rounded-full blur-[80px]" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-8 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 w-fit shadow-sm">
+              <Sparkles className="h-4 w-4 text-white" />
+              <span className="text-[10px] text-white font-extrabold uppercase tracking-wider">Barangay Medical Suite</span>
+            </div>
+            <h2 className="text-5xl font-black text-white leading-tight tracking-tight mb-4">
+              Care at your<br />fingertips.
+            </h2>
+            <p className="text-white/85 text-lg font-medium leading-relaxed max-w-sm">
+              Connecting residents, administrators, and health workers in one unified digital ecosystem.
             </p>
-            <div className="mt-8 space-y-3 text-left">
-              {["Book health checkups instantly", "Emergency ambulance dispatch", "Real-time health notifications"].map((item) => (
-                <div key={item} className="flex items-center gap-3">
-                  <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <ArrowRight className="h-3.5 w-3.5 text-white" />
+          </div>
+
+          <div className="relative z-10 space-y-6">
+            <div className="space-y-4">
+              {[
+                "Book doctor appointments & checkups instantly",
+                "Instant request for ambulance dispatches",
+                "Stay informed with real-time health notifications",
+              ].map((item, index) => (
+                <div key={index} className="flex items-center gap-4 group">
+                  <div className="h-9 w-9 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 transition-transform group-hover:scale-105 duration-300 shrink-0 shadow-md">
+                    <ArrowRight className="h-4 w-4 text-white" />
                   </div>
-                  <span className="text-sm text-white/90">{item}</span>
+                  <span className="text-sm font-semibold text-white/95">{item}</span>
                 </div>
               ))}
+            </div>
+
+            <div className="pt-8 border-t border-white/15 flex justify-between items-center text-white/80 text-xs">
+              <div className="flex items-center gap-1.5 font-semibold">
+                <Shield className="h-4 w-4 text-white" /> SECURE ACCESS
+              </div>
+              <p className="italic">Improving community wellbeing</p>
             </div>
           </div>
         </div>
 
         {/* Right Form Panel */}
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-sm">
-            <div className="flex flex-col items-center gap-1 mb-8 text-center">
-              <div className="lg:hidden mb-3">
-                <img src={logoPath} alt="BaraGo Logo" className="h-14 w-auto object-contain mx-auto" />
-              </div>
-              <h1 className="text-2xl font-extrabold text-foreground">Welcome Back</h1>
-              <p className="text-sm text-muted-foreground">
-                Log in to access your barangay health services.
+        <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+          <div className="w-full max-w-[420px] space-y-8">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Welcome Back</h1>
+              <p className="text-sm text-muted-foreground font-medium">
+                Log in to securely access your health portal dashboard.
               </p>
             </div>
 
-            <div className="bg-card border border-border/60 rounded-2xl p-8 shadow-sm">
+            <div className="backdrop-blur-xl bg-card/75 border border-border/40 rounded-3xl p-8 shadow-2xl shadow-primary/5 hover:border-border/60 transition-all duration-500 relative">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+              
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold">Email or Username</FormLabel>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Email or Username</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="name@example.com"
                             autoComplete="email"
-                            className="h-11 bg-muted/50 border-border/80 rounded-xl focus:ring-2 focus:ring-primary/20"
+                            className="h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium"
                             {...field}
                           />
                         </FormControl>
@@ -129,29 +156,29 @@ export default function Login() {
                     control={form.control}
                     name="password"
                     render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between mb-1">
-                          <FormLabel className="font-semibold">Password</FormLabel>
-                          <Link href="/forgot-password" className="text-xs font-semibold text-secondary hover:underline">
-                            Forgot Password?
+                      <FormItem className="space-y-1.5">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Password</FormLabel>
+                          <Link href="/forgot-password" className="text-xs font-bold text-primary hover:underline hover:text-emerald-500 transition-colors">
+                            Forgot?
                           </Link>
                         </div>
                         <FormControl>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground pointer-events-none" />
                             <Input
                               type={showPassword ? "text" : "password"}
                               placeholder="Enter your password"
                               autoComplete="current-password"
-                              className="pl-9 pr-10 h-11 bg-muted/50 border-border/80 rounded-xl focus:ring-2 focus:ring-primary/20"
+                              className="pl-10 pr-10 h-11.5 bg-muted/30 border-border/50 hover:border-border/90 rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all duration-300 font-medium"
                               {...field}
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
                             </button>
                           </div>
                         </FormControl>
@@ -162,49 +189,49 @@ export default function Login() {
 
                   <Button
                     type="submit"
-                    className="w-full h-11 font-semibold rounded-xl bg-gradient-to-r from-secondary to-blue-500 hover:from-secondary/90 hover:to-blue-400 shadow-sm gap-2"
+                    className="w-full h-11.5 font-bold rounded-2xl bg-gradient-to-r from-primary via-emerald-500 to-teal-400 hover:opacity-95 text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 gap-2 text-sm"
                     disabled={loginMutation.isPending}
                   >
                     {loginMutation.isPending ? (
                       <span className="flex items-center gap-2">
                         <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Logging in...
+                        Logging you in...
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">
-                        <LogIn className="h-4 w-4" /> Log In
+                        <LogIn className="h-4 w-4" /> Log In to Dashboard
                       </span>
                     )}
                   </Button>
                 </form>
               </Form>
 
-              <div className="relative my-5 text-center">
+              <div className="relative my-6 text-center">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border/60" />
+                  <span className="w-full border-t border-border/40" />
                 </div>
-                <span className="relative px-3 bg-card text-xs text-muted-foreground uppercase font-medium">or</span>
+                <span className="relative px-3.5 bg-card text-[10px] text-muted-foreground uppercase font-black tracking-widest">or</span>
               </div>
 
               <Button
                 variant="outline"
-                className="w-full h-11 font-semibold border-border/80 rounded-xl hover:bg-primary/5 hover:border-primary hover:text-primary gap-2"
+                className="w-full h-11.5 font-bold border-border/60 hover:border-primary hover:text-primary rounded-2xl hover:bg-primary/5 transition-all duration-300 gap-2 text-sm"
                 asChild
               >
                 <Link href="/register">
                   <UserPlus className="h-4 w-4" />
-                  Create Account
+                  Create Resident Account
                 </Link>
               </Button>
 
-              <div className="mt-5 flex items-start gap-3 text-muted-foreground bg-muted/50 p-3 rounded-xl border border-border/60">
-                <Headset className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-xs leading-relaxed">
-                  Need help? Contact your barangay health center or call the{" "}
-                  <a href="tel:911" className="text-destructive font-semibold hover:underline">
-                    emergency hotline
+              <div className="mt-6 flex items-start gap-3 text-muted-foreground bg-muted/20 hover:bg-muted/40 p-4.5 rounded-2xl border border-border/40 transition-colors duration-300">
+                <Headset className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed font-medium">
+                  Need assistance? Contact the barangay center or call the{" "}
+                  <a href="tel:911" className="text-destructive font-black hover:underline">
+                    911 Emergency Hotline
                   </a>{" "}
-                  for assistance.
+                  immediately for critical situations.
                 </p>
               </div>
             </div>
@@ -212,13 +239,13 @@ export default function Login() {
         </div>
       </main>
 
-      <footer className="bg-gradient-to-r from-primary to-emerald-500 text-white py-4 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-center">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 opacity-80" />
-            <p className="font-semibold text-xs uppercase tracking-wide">BaraGo Barangay Healthcare Scheduling System</p>
+      <footer className="border-t border-border/40 bg-card/30 backdrop-blur-md py-4.5 px-6 z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Shield className="h-4 w-4 text-primary" />
+            <p className="font-bold text-xs uppercase tracking-wider">BaraGo Medical Coordination Platform</p>
           </div>
-          <p className="text-xs opacity-80 italic">"Improving lives. Building healthier communities."</p>
+          <p className="text-xs text-muted-foreground/80 font-medium italic">"Improving lives. Building healthier, safer communities together."</p>
         </div>
       </footer>
     </div>

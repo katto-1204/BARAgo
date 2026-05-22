@@ -1,4 +1,5 @@
 import { useGetAdminDashboard, getGetAdminDashboardQueryKey, useListAppointments, getListAppointmentsQueryKey, useListAmbulanceRequests, getListAmbulanceRequestsQueryKey } from "@workspace/api-client-react";
+import type { Appointment, AmbulanceRequest, AppointmentWithResident, AmbulanceRequestWithResident } from "@workspace/api-client-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -115,12 +116,12 @@ export default function AdminDashboard() {
   // Helper to check if a specific day has any appointment
   const hasAppointmentOnDay = (day: number) => {
     const checkDateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return appointmentsList?.some(appt => appt.preferredDate === checkDateStr);
+    return appointmentsList?.some((appt: Appointment) => appt.preferredDate === checkDateStr);
   };
 
   // Helper to check if a specific day has any ambulance request
   const hasAmbulanceOnDay = (day: number) => {
-    return ambulanceRequestsList?.some(req => {
+    return ambulanceRequestsList?.some((req: AmbulanceRequest) => {
       const d = new Date(req.requestedAt);
       return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
     });
@@ -128,10 +129,10 @@ export default function AdminDashboard() {
 
   // Filter appointments for the currently selected date
   const selectedDateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
-  const appointmentsForSelectedDate = appointmentsList?.filter(appt => appt.preferredDate === selectedDateStr) || [];
+  const appointmentsForSelectedDate = appointmentsList?.filter((appt: Appointment) => appt.preferredDate === selectedDateStr) || [];
 
   // Filter ambulance requests for the currently selected date
-  const ambulanceForSelectedDate = ambulanceRequestsList?.filter(req => {
+  const ambulanceForSelectedDate = ambulanceRequestsList?.filter((req: AmbulanceRequest) => {
     const d = new Date(req.requestedAt);
     return d.getFullYear() === selectedDate.getFullYear() &&
            d.getMonth() === selectedDate.getMonth() &&
@@ -287,11 +288,11 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground text-center py-8 italic">No appointments requested yet</p>
                 ) : (
                   <div className="divide-y divide-border/60">
-                    {dashboard?.recentAppointments?.slice(0, 4).map((appt) => (
+                    {dashboard?.recentAppointments?.slice(0, 4).map((appt: AppointmentWithResident) => (
                       <div key={appt.id} className="flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors group cursor-pointer">
                         <Avatar className="h-9 w-9 border border-primary/20 shrink-0">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                            {appt.patientName.split(" ").map(n => n[0]).join("").toUpperCase()}
+                            {appt.patientName.split(" ").map((n: string) => n[0]).join("").toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
@@ -327,13 +328,13 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground text-center py-8 italic">No ambulance dispatch requested</p>
                 ) : (
                   <div className="divide-y divide-border/60">
-                    {dashboard?.recentAmbulanceRequests?.slice(0, 4).map((req) => (
+                    {dashboard?.recentAmbulanceRequests?.slice(0, 4).map((req: AmbulanceRequestWithResident) => (
                       <div key={req.id} className="flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors group cursor-pointer">
                         <div className={cn(
                           "h-9 w-9 rounded-2xl flex items-center justify-center font-bold text-xs shrink-0",
                           req.urgencyLevel === 'high' ? 'bg-red-500/10 text-red-600' : 'bg-blue-500/10 text-blue-600'
                         )}>
-                          {req.patientName.split(" ").map(n => n[0]).join("").toUpperCase()}
+                          {req.patientName.split(" ").map((n: string) => n[0]).join("").toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-xs text-foreground truncate">{req.patientName}</p>
@@ -454,7 +455,7 @@ export default function AdminDashboard() {
               ) : (appointmentsForSelectedDate.length > 0 || ambulanceForSelectedDate.length > 0) ? (
                 <div className="divide-y divide-border/60">
                   {/* Ambulance Requests */}
-                  {ambulanceForSelectedDate.map(req => (
+                  {ambulanceForSelectedDate.map((req: AmbulanceRequest) => (
                     <div key={req.id} className="p-4 hover:bg-muted/30 transition-colors flex items-start gap-3 bg-red-500/5">
                       <div className="h-6 w-6 rounded-lg bg-red-500/10 border border-red-500/25 flex items-center justify-center text-red-600 shrink-0 mt-0.5">
                         <Truck className="h-3.5 w-3.5" />
@@ -476,7 +477,7 @@ export default function AdminDashboard() {
                   ))}
 
                   {/* Appointments */}
-                  {appointmentsForSelectedDate.map(appt => (
+                  {appointmentsForSelectedDate.map((appt: Appointment) => (
                     <div key={appt.id} className="p-4 hover:bg-muted/30 transition-colors flex items-start gap-3">
                       <div className="h-6 w-6 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
                         <Check className="h-4 w-4" />

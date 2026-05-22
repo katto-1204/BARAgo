@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { ReactNode } from "react";
-import logoPath from "@assets/image_1779289197249.png";
 import { Shield, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -11,8 +10,11 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <img src={logoPath} alt="BaraGo Logo" className="h-9 w-auto object-contain" />
+          <Link href="/" className="flex items-center gap-2">
+            <Shield className="h-6 w-6 text-primary" />
+            <span className="font-extrabold text-xl tracking-tight text-foreground">
+              Bara<span className="text-primary">Go</span>
+            </span>
           </Link>
           <nav className="flex items-center gap-2">
             <button

@@ -6,6 +6,15 @@ import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -21,12 +30,76 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+type AuthErrorModal = {
+  title: string;
+  description: string;
+  details?: string;
+};
+
+function getApiErrorData(error: unknown) {
+  return error as {
+    status?: number;
+    message?: string;
+    data?: { error?: string; message?: string; details?: string };
+    response?: { data?: { error?: string; message?: string; details?: string } };
+  };
+}
+
+function getLoginError(error: unknown): AuthErrorModal {
+  const apiError = getApiErrorData(error);
+  const serverMessage =
+    apiError.data?.error ||
+    apiError.data?.message ||
+    apiError.response?.data?.error ||
+    apiError.response?.data?.message ||
+    apiError.message;
+
+  if (error instanceof TypeError || /failed to fetch|network/i.test(serverMessage ?? "")) {
+    return {
+      title: "Connection problem",
+      description: "The app cannot reach the login server right now.",
+      details: "Check that the backend is running and that your internet or local network connection is available.",
+    };
+  }
+
+  if (apiError.status === 401 && /disabled|banned|blocked/i.test(serverMessage ?? "")) {
+    return {
+      title: "Account disabled",
+      description: "This account is disabled and cannot log in.",
+      details: "Contact the barangay administrator to reactivate or review the account.",
+    };
+  }
+
+  if (apiError.status === 401 || /invalid credentials/i.test(serverMessage ?? "")) {
+    return {
+      title: "Wrong email or password",
+      description: "The email and password combination does not match any active account.",
+      details: "Check the spelling of your email and enter the correct password.",
+    };
+  }
+
+  if (apiError.status === 400) {
+    return {
+      title: "Missing login details",
+      description: "Please enter both your email and password.",
+      details: serverMessage,
+    };
+  }
+
+  return {
+    title: "Login unavailable",
+    description: "The server could not complete your login request.",
+    details: serverMessage || "Please try again, then contact support if the problem continues.",
+  };
+}
+
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const loginMutation = useLoginUser();
   const { refetch } = useGetCurrentUser({ query: { enabled: false, queryKey: getGetCurrentUserQueryKey() } });
   const [showPassword, setShowPassword] = useState(false);
+  const [errorModal, setErrorModal] = useState<AuthErrorModal | null>(null);
   const { theme, setTheme } = useTheme();
 
   const form = useForm<LoginFormValues>({
@@ -43,10 +116,9 @@ export default function Login() {
       else if (user?.role === "health_worker") setLocation("/health-worker");
       else setLocation("/dashboard");
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Invalid email or password. Please try again.";
-      toast({ title: "Login failed", description: msg, variant: "destructive" });
+      const error = getLoginError(err);
+      setErrorModal(error);
+      toast({ title: error.title, description: error.description, variant: "destructive" });
     }
   };
 
@@ -248,6 +320,25 @@ export default function Login() {
           <p className="text-xs text-muted-foreground/80 font-medium italic">"Improving lives. Building healthier, safer communities together."</p>
         </div>
       </footer>
+
+      <AlertDialog open={!!errorModal} onOpenChange={(open) => !open && setErrorModal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{errorModal?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {errorModal?.description}
+              {errorModal?.details && (
+                <span className="mt-3 block rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+                  {errorModal.details}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setErrorModal(null)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

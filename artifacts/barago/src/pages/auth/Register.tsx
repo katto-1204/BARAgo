@@ -6,6 +6,15 @@ import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -43,6 +52,61 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+type RegisterErrorModal = {
+  title: string;
+  description: string;
+  details?: string;
+};
+
+function getApiErrorData(error: unknown) {
+  return error as {
+    status?: number;
+    message?: string;
+    data?: { error?: string; message?: string; details?: string };
+    response?: { data?: { error?: string; message?: string; details?: string } };
+  };
+}
+
+function getRegisterError(error: unknown): RegisterErrorModal {
+  const apiError = getApiErrorData(error);
+  const serverMessage =
+    apiError.data?.error ||
+    apiError.data?.message ||
+    apiError.response?.data?.error ||
+    apiError.response?.data?.message ||
+    apiError.message;
+
+  if (error instanceof TypeError || /failed to fetch|network/i.test(serverMessage ?? "")) {
+    return {
+      title: "Connection problem",
+      description: "The app cannot reach the registration server right now.",
+      details: "Check that the backend is running and that your internet or local network connection is available.",
+    };
+  }
+
+  if (/email already registered/i.test(serverMessage ?? "")) {
+    return {
+      title: "Email already registered",
+      description: "An account already exists with this email address.",
+      details: "Use the login page instead, or register with a different email address.",
+    };
+  }
+
+  if (apiError.status === 400) {
+    return {
+      title: "Registration details need correction",
+      description: "Some required information is missing or invalid.",
+      details: serverMessage,
+    };
+  }
+
+  return {
+    title: "Registration unavailable",
+    description: "The server could not create your account.",
+    details: serverMessage || "Please try again, then contact support if the problem continues.",
+  };
+}
+
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -50,6 +114,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [age, setAge] = useState<number | null>(null);
+  const [errorModal, setErrorModal] = useState<RegisterErrorModal | null>(null);
   const { theme, setTheme } = useTheme();
 
   const form = useForm<RegisterFormValues>({
@@ -101,10 +166,9 @@ export default function Register() {
       toast({ title: "Account created!", description: "Please log in to continue." });
       setLocation("/login");
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Registration failed. Please check your information and try again.";
-      toast({ title: "Registration failed", description: msg, variant: "destructive" });
+      const error = getRegisterError(err);
+      setErrorModal(error);
+      toast({ title: error.title, description: error.description, variant: "destructive" });
     }
   };
 
@@ -492,6 +556,25 @@ export default function Register() {
           <p className="text-xs text-muted-foreground/80 font-medium italic">"Improving lives. Building healthier, safer communities together."</p>
         </div>
       </footer>
+
+      <AlertDialog open={!!errorModal} onOpenChange={(open) => !open && setErrorModal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{errorModal?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {errorModal?.description}
+              {errorModal?.details && (
+                <span className="mt-3 block rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+                  {errorModal.details}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setErrorModal(null)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

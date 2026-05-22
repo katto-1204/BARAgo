@@ -5,7 +5,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -128,21 +128,28 @@ export default function ManageAppointments() {
     }));
   };
 
+  const getErrorMessage = (error: unknown, fallback: string) =>
+    (error as { response?: { data?: { error?: string; message?: string; details?: string } } })?.response?.data?.error ||
+    (error as { response?: { data?: { error?: string; message?: string; details?: string } } })?.response?.data?.message ||
+    fallback;
+
   const handleCreateAppointment = () => {
     if (!createForm.residentId || !createForm.patientName || !createForm.reason || !createForm.preferredDate || !createForm.preferredTime) {
       toast({ title: "Complete the appointment details", variant: "destructive" });
       return;
     }
 
+    const payload = {
+      residentId: createForm.residentId,
+      patientName: createForm.patientName.trim(),
+      patientAge: createForm.patientAge ? Number(createForm.patientAge) : undefined,
+      reason: createForm.reason.trim(),
+      preferredDate: createForm.preferredDate,
+      preferredTime: createForm.preferredTime,
+    };
+
     createMutation.mutate({
-      data: {
-        residentId: createForm.residentId,
-        patientName: createForm.patientName,
-        patientAge: createForm.patientAge ? Number(createForm.patientAge) : undefined,
-        reason: createForm.reason,
-        preferredDate: createForm.preferredDate,
-        preferredTime: createForm.preferredTime,
-      } as any,
+      data: payload as any,
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
@@ -150,7 +157,11 @@ export default function ManageAppointments() {
         setShowCreateDialog(false);
         setCreateForm(DEFAULT_CREATE_FORM);
       },
-      onError: () => toast({ title: "Failed to create appointment", variant: "destructive" }),
+      onError: (error) => toast({
+        title: "Failed to create appointment",
+        description: getErrorMessage(error, "Please check the appointment details and try again."),
+        variant: "destructive",
+      }),
     });
   };
 
@@ -364,6 +375,9 @@ export default function ManageAppointments() {
               {dialog?.type === "reschedule" && "Reschedule Appointment"}
               {dialog?.type === "complete" && "Mark as Completed"}
             </DialogTitle>
+            <DialogDescription>
+              Confirm the appointment action and add remarks when needed.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">Patient: <span className="font-medium text-foreground">{dialog?.patientName}</span></p>
@@ -403,6 +417,9 @@ export default function ManageAppointments() {
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>Create Appointment</DialogTitle>
+            <DialogDescription>
+              Create a checkup appointment for a registered resident.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">

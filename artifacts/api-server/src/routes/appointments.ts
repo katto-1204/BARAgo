@@ -51,18 +51,26 @@ router.get("/appointments", requireAuthMiddleware, async (req, res): Promise<voi
 
 router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<void> => {
   const sessionUser = req.session.user!;
-  const residentId = sessionUser.role === "admin"
+  const canCreateForResident = sessionUser.role === "admin" || sessionUser.role === "health_worker";
+  const residentId = canCreateForResident
     ? typeof req.body.residentId === "string" ? req.body.residentId : null
     : sessionUser.residentId;
 
-  const parsed = CreateAppointmentBody.safeParse(req.body);
+  const parsed = CreateAppointmentBody.safeParse({
+    patientName: req.body.patientName,
+    patientAge: req.body.patientAge,
+    reason: req.body.reason,
+    preferredDate: req.body.preferredDate,
+    preferredTime: req.body.preferredTime,
+    notes: req.body.notes,
+  });
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({ error: "Invalid appointment details", details: parsed.error.message });
     return;
   }
 
   if (!residentId) {
-    res.status(400).json({ error: "No resident profile found" });
+    res.status(400).json({ error: "Please select a resident for this appointment." });
     return;
   }
 

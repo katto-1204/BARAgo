@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -177,7 +178,7 @@ export default function NewAppointment() {
 
                 {/* Available Schedules */}
                 <div className="space-y-3">
-                  <FormLabel className="font-semibold text-foreground">Available Schedules</FormLabel>
+                  <Label className="font-semibold text-foreground">Available Schedules</Label>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {schedules && schedules.length > 0 ? (
                       schedules.map((s) => {

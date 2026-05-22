@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, usersTable, residentsTable, appointmentsTable, notificationsTable } from "@workspace/db";
 import { requireAuthMiddleware, requireAdminOrHealthWorker } from "../middlewares/auth";
-import { CreateAppointmentBody, UpdateAppointmentBody } from "@workspace/api-zod";
+import { UpdateAppointmentBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -56,16 +56,16 @@ router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<vo
     ? typeof req.body.residentId === "string" ? req.body.residentId : null
     : sessionUser.residentId;
 
-  const parsed = CreateAppointmentBody.safeParse({
-    patientName: req.body.patientName,
-    patientAge: req.body.patientAge,
-    reason: req.body.reason,
-    preferredDate: req.body.preferredDate,
-    preferredTime: req.body.preferredTime,
-    notes: req.body.notes,
-  });
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid appointment details", details: parsed.error.message });
+  const patientName = typeof req.body.patientName === "string" ? req.body.patientName.trim() : "";
+  const reason = typeof req.body.reason === "string" ? req.body.reason.trim() : "";
+  const preferredDate = typeof req.body.preferredDate === "string" ? req.body.preferredDate : "";
+  const preferredTime = typeof req.body.preferredTime === "string" ? req.body.preferredTime : "";
+  const patientAge = typeof req.body.patientAge === "number" && Number.isFinite(req.body.patientAge)
+    ? req.body.patientAge
+    : null;
+
+  if (!patientName || !reason || !preferredDate || !preferredTime) {
+    res.status(400).json({ error: "Patient name, reason, date, and time are required." });
     return;
   }
 
@@ -82,11 +82,11 @@ router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<vo
 
   const [appointment] = await db.insert(appointmentsTable).values({
     residentId,
-    patientName: parsed.data.patientName,
-    patientAge: parsed.data.patientAge ?? null,
-    reason: parsed.data.reason,
-    preferredDate: parsed.data.preferredDate ?? null,
-    preferredTime: parsed.data.preferredTime ?? null,
+    patientName,
+    patientAge,
+    reason,
+    preferredDate,
+    preferredTime,
     status: "pending",
   }).returning();
 

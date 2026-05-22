@@ -129,6 +129,9 @@ export default function ManageAppointments() {
   };
 
   const getErrorMessage = (error: unknown, fallback: string) =>
+    (error as { data?: { error?: string; message?: string; details?: string } })?.data?.error ||
+    (error as { data?: { error?: string; message?: string; details?: string } })?.data?.message ||
+    (error as { message?: string })?.message ||
     (error as { response?: { data?: { error?: string; message?: string; details?: string } } })?.response?.data?.error ||
     (error as { response?: { data?: { error?: string; message?: string; details?: string } } })?.response?.data?.message ||
     fallback;
@@ -142,14 +145,17 @@ export default function ManageAppointments() {
     const payload = {
       residentId: createForm.residentId,
       patientName: createForm.patientName.trim(),
-      patientAge: createForm.patientAge ? Number(createForm.patientAge) : undefined,
       reason: createForm.reason.trim(),
       preferredDate: createForm.preferredDate,
       preferredTime: createForm.preferredTime,
     };
+    const parsedAge = createForm.patientAge ? Number(createForm.patientAge) : undefined;
+    const appointmentPayload = Number.isFinite(parsedAge)
+      ? { ...payload, patientAge: parsedAge }
+      : payload;
 
     createMutation.mutate({
-      data: payload as any,
+      data: appointmentPayload as any,
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });

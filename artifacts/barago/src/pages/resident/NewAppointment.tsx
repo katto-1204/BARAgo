@@ -12,9 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, User, Calendar as CalendarIcon, Clock, Info,
+  ArrowLeft, ChevronDown, User, Calendar as CalendarIcon, Clock, Info,
   CheckCircle2, Heart, Stethoscope
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -22,7 +24,10 @@ import { cn } from "@/lib/utils";
 
 const schema = z.object({
   patientName: z.string().min(1, "Patient name is required"),
-  patientAge: z.coerce.number().int().positive().optional(),
+  patientAge: z.preprocess(
+    (value) => value === "" || value === undefined ? undefined : Number(value),
+    z.number().int().positive().max(99, "Age must be 2 digits only").optional()
+  ),
   reason: z.string().min(1, "Reason is required"),
   scheduleId: z.string().min(1, "Please choose an available schedule"),
   preferredDate: z.string().min(1, "Preferred date is required"),
@@ -42,6 +47,19 @@ const REASONS = [
   "Dental",
   "Other"
 ];
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function toDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export default function NewAppointment() {
   const [, setLocation] = useLocation();
@@ -83,11 +101,25 @@ export default function NewAppointment() {
   };
 
   const selectedScheduleId = form.watch("scheduleId");
-  const today = new Date().toISOString().split("T")[0];
+  const selectedPreferredDate = form.watch("preferredDate");
+  const minimumAppointmentDate = toDateString(addDays(new Date(), 2));
   const availableSchedules = (schedules ?? []).filter((schedule) => {
     const remainingSlots = schedule.slotLimit - (schedule.currentSlots || 0);
-    return schedule.status === "open" && schedule.scheduleDate >= today && remainingSlots > 0;
+    return schedule.status === "open" && schedule.scheduleDate >= minimumAppointmentDate && remainingSlots > 0;
   });
+  const availableDateSet = new Set(availableSchedules.map((schedule) => schedule.scheduleDate));
+  const filteredSchedules = selectedPreferredDate
+    ? availableSchedules.filter((schedule) => schedule.scheduleDate === selectedPreferredDate)
+    : availableSchedules;
+  const selectedDateValue = selectedPreferredDate ? parseISO(selectedPreferredDate) : undefined;
+
+  const selectSchedule = (scheduleId: string) => {
+    const schedule = availableSchedules.find((item) => item.id === scheduleId);
+    if (!schedule) return;
+    form.setValue("scheduleId", schedule.id, { shouldValidate: true });
+    form.setValue("preferredDate", schedule.scheduleDate, { shouldValidate: true });
+    form.setValue("preferredTime", `${schedule.startTime} - ${schedule.endTime}`, { shouldValidate: true });
+  };
 
   return (
     <AppLayout>
@@ -158,7 +190,19 @@ export default function NewAppointment() {
                         <User className="h-4 w-4 text-primary" /> Age <span className="text-muted-foreground font-normal">(optional)</span>
                       </FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Age" data-testid="input-patient-age" className="rounded-xl" {...field} />
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={2}
+                          placeholder="Age"
+                          data-testid="input-patient-age"
+                          className="rounded-xl"
+                          value={field.value?.toString() ?? ""}
+                          onChange={(e) => {
+                            const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 2);
+                            field.onChange(digitsOnly);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -187,6 +231,45 @@ export default function NewAppointment() {
                 {/* Available Schedules */}
                 <div className="space-y-3">
                   <Label className="font-semibold text-foreground">Available Schedules</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Appointments must be booked at least 2 days before the scheduled date.
+                  </p>
+                  <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Choose Date</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-between rounded-xl bg-white text-left font-medium",
+                            !selectedPreferredDate && "text-muted-foreground"
+                          )}
+                        >
+                          {selectedPreferredDate ? format(parseISO(selectedPreferredDate), "MMMM dd, yyyy") : "Open calendar"}
+                          <ChevronDown className="h-4 w-4 opacity-60" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDateValue}
+                          onSelect={(date) => {
+                            if (!date) return;
+                            const dateStr = toDateString(date);
+                            form.setValue("preferredDate", dateStr, { shouldValidate: true });
+                            const firstSchedule = availableSchedules.find((schedule) => schedule.scheduleDate === dateStr);
+                            if (firstSchedule) {
+                              selectSchedule(firstSchedule.id);
+                            } else {
+                              form.setValue("scheduleId", "", { shouldValidate: true });
+                              form.setValue("preferredTime", "", { shouldValidate: true });
+                            }
+                          }}
+                          disabled={(date) => !availableDateSet.has(toDateString(date))}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {isSchedulesLoading ? (
                       <div className="grid w-full gap-3 sm:grid-cols-2">
@@ -197,8 +280,8 @@ export default function NewAppointment() {
                       <div className="w-full rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
                         Unable to load health schedules. Please refresh the page or contact the barangay health office.
                       </div>
-                    ) : availableSchedules.length > 0 ? (
-                      availableSchedules.map((s) => {
+                    ) : filteredSchedules.length > 0 ? (
+                      filteredSchedules.map((s) => {
                         const date = parseISO(s.scheduleDate);
                         const remainingSlots = s.slotLimit - (s.currentSlots || 0);
                         const isSelected = selectedScheduleId === s.id;
@@ -206,11 +289,7 @@ export default function NewAppointment() {
                           <button
                             key={s.id}
                             type="button"
-                            onClick={() => {
-                              form.setValue("scheduleId", s.id, { shouldValidate: true });
-                              form.setValue("preferredDate", s.scheduleDate);
-                              form.setValue("preferredTime", `${s.startTime} - ${s.endTime}`);
-                            }}
+                            onClick={() => selectSchedule(s.id)}
                             className={cn(
                               "flex-shrink-0 flex w-44 flex-col items-start justify-center rounded-2xl border-2 p-4 text-left transition-all duration-200 shadow-sm",
                               isSelected
@@ -231,8 +310,12 @@ export default function NewAppointment() {
                     ) : (
                       <div className="w-full rounded-xl border border-dashed bg-muted/30 p-5 text-center">
                         <CalendarIcon className="mx-auto mb-2 h-7 w-7 text-muted-foreground/50" />
-                        <p className="text-sm font-semibold text-foreground">No available health schedules yet.</p>
-                        <p className="text-sm text-muted-foreground">Please check again later or contact the barangay health office.</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {selectedPreferredDate ? "No schedules available on this date." : "No available health schedules yet."}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedPreferredDate ? "Pick another available date from the calendar." : "Please check again later or contact the barangay health office."}
+                        </p>
                       </div>
                     )}
                   </div>

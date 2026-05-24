@@ -139,7 +139,7 @@ export default function Login() {
 
       {/* Header */}
       <header className="h-16 border-b border-border/40 bg-background/60 backdrop-blur-xl flex items-center justify-between px-6 z-10 sticky top-0">
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/landing" className="flex items-center gap-2 group">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-primary via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-primary/15 transition-transform group-hover:scale-105 duration-300">
             <Stethoscope className="h-4.5 w-4.5 text-white" />
           </div>

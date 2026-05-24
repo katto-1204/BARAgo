@@ -6,6 +6,32 @@ import { UpdateAppointmentBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
+function toDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getMinimumAppointmentDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 2);
+  return toDateString(date);
+}
+
+function validateAppointmentDate(date: string | null | undefined) {
+  if (!date) return "Appointment date is required.";
+  const today = toDateString(new Date());
+  const minimumAppointmentDate = getMinimumAppointmentDate();
+
+  if (date < today) return "Appointment date cannot be before today.";
+  if (date < minimumAppointmentDate) {
+    return `Appointments must be scheduled at least 2 days before the appointment date. Please choose ${minimumAppointmentDate} or later.`;
+  }
+
+  return null;
+}
+
 async function buildAppointmentWithResident(appointment: typeof appointmentsTable.$inferSelect) {
   const [resident] = await db
     .select()
@@ -117,6 +143,12 @@ router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<vo
     return;
   }
 
+  const dateError = validateAppointmentDate(preferredDate);
+  if (dateError) {
+    res.status(400).json({ error: dateError });
+    return;
+  }
+
   if (!residentId) {
     res.status(400).json({ error: "Please select a resident for this appointment." });
     return;
@@ -190,7 +222,21 @@ router.patch("/appointments/:id", requireAdminOrHealthWorker, async (req, res): 
   const isLeavingApproved = parsed.data.status && parsed.data.status !== "approved" && existing.status === "approved";
   const scheduleToSyncAfterLeaving = isLeavingApproved ? await findScheduleForAppointment(existing) : null;
 
+  if (parsed.data.preferredDate) {
+    const dateError = validateAppointmentDate(parsed.data.preferredDate);
+    if (dateError) {
+      res.status(400).json({ error: dateError });
+      return;
+    }
+  }
+
   if (isApproving) {
+    const dateError = validateAppointmentDate(existing.preferredDate);
+    if (dateError) {
+      res.status(400).json({ error: dateError });
+      return;
+    }
+
     const schedule = await findScheduleForAppointment(existing);
     if (!schedule) {
       res.status(400).json({ error: "No health schedule exists for this appointment date. Create a matching schedule before approving." });

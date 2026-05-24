@@ -114,9 +114,11 @@ export default function ResidentDashboard() {
   // Filter appointments for the currently selected date
   const selectedDateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
   const appointmentsForSelectedDate = appointmentsList?.filter(appt => appt.preferredDate === selectedDateStr) || [];
-  const todayStr = new Date().toISOString().split("T")[0];
+  const minimumAppointmentDate = new Date();
+  minimumAppointmentDate.setDate(minimumAppointmentDate.getDate() + 2);
+  const minimumAppointmentDateStr = `${minimumAppointmentDate.getFullYear()}-${String(minimumAppointmentDate.getMonth() + 1).padStart(2, "0")}-${String(minimumAppointmentDate.getDate()).padStart(2, "0")}`;
   const availableSchedules = (schedules ?? [])
-    .filter((schedule) => schedule.status === "open" && schedule.scheduleDate >= todayStr && schedule.currentSlots < schedule.slotLimit)
+    .filter((schedule) => schedule.status === "open" && schedule.scheduleDate >= minimumAppointmentDateStr && schedule.currentSlots < schedule.slotLimit)
     .slice(0, 4);
 
   return (

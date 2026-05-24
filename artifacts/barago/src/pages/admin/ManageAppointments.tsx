@@ -37,6 +37,19 @@ function getActionErrorMessage(error: unknown) {
     || "Action failed";
 }
 
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function toDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function ManageAppointments() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,6 +60,7 @@ export default function ManageAppointments() {
   const [reschedTime, setReschedTime] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const minimumAppointmentDate = toDateString(addDays(new Date(), 2));
 
   const { data: appointments, isLoading } = useListAppointments({}, {
     query: { queryKey: getListAppointmentsQueryKey({}) },
@@ -86,7 +100,17 @@ export default function ManageAppointments() {
     };
     const payload: Record<string, any> = { status: statusMap[dialog.type] };
     if (remarks) payload.adminRemarks = remarks;
-    if (dialog.type === "reschedule" && reschedDate) payload.preferredDate = reschedDate;
+    if (dialog.type === "reschedule") {
+      if (!reschedDate) {
+        toast({ title: "Select a new date", description: `Choose ${minimumAppointmentDate} or later.`, variant: "destructive" });
+        return;
+      }
+      if (reschedDate < minimumAppointmentDate) {
+        toast({ title: "Invalid appointment date", description: `Appointments must be scheduled at least 2 days ahead. Choose ${minimumAppointmentDate} or later.`, variant: "destructive" });
+        return;
+      }
+      payload.preferredDate = reschedDate;
+    }
     if (dialog.type === "reschedule" && reschedTime) payload.preferredTime = reschedTime;
 
     updateMutation.mutate({ id: dialog.appointmentId, data: payload }, {
@@ -324,7 +348,8 @@ export default function ManageAppointments() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>New Date</Label>
-                  <Input type="date" value={reschedDate} onChange={e => setReschedDate(e.target.value)} />
+                  <Input type="date" min={minimumAppointmentDate} value={reschedDate} onChange={e => setReschedDate(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Choose {minimumAppointmentDate} or later.</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label>New Time</Label>

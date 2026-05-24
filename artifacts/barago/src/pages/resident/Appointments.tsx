@@ -109,8 +109,18 @@ export default function Appointments() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Appointments</h1>
-          <p className="text-slate-500 mt-1">View and manage your healthcare appointments.</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">My Appointments</h1>
+              <p className="text-slate-500 mt-1">View and manage your healthcare appointments.</p>
+            </div>
+            <Button asChild className="hidden md:inline-flex bg-green-600 hover:bg-green-700">
+              <Link href="/appointments/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Book Appointment
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-2">

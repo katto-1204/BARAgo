@@ -25,6 +25,106 @@ The application supports three primary user roles:
 - Shared API contracts through OpenAPI, Orval, and Zod
 - PostgreSQL persistence using Drizzle ORM
 
+## Workflow
+
+### System Overview
+
+```mermaid
+flowchart LR
+    A[Resident Login] --> B[Create Appointment or Ambulance Request]
+    B --> C[Admin Reviews Request]
+    C --> D{Decision}
+    D -->|Approve| E[Schedule Linked and Status Updated]
+    D -->|Reject| F[Resident Notified]
+    D -->|Reschedule| G[Resident Receives New Schedule]
+    E --> H[Worker Dashboard Receives Approved Task]
+    H --> I[Worker Assists Resident]
+    I --> J[Appointment Completed]
+```
+
+### Appointment Workflow
+
+```mermaid
+flowchart TD
+    A[Resident logs in] --> B[Open Appointments]
+    B --> C[Click Book Appointment]
+    C --> D[Choose valid schedule]
+    D --> E[Enter patient name, age, reason]
+    E --> F[Submit appointment]
+    F --> G[Status = Pending]
+    G --> H[Admin opens Manage Appointments]
+    H --> I[Admin reviews request]
+    I --> J{Approve?}
+    J -->|No - Reject| K[Resident gets rejection notice]
+    J -->|No - Reschedule| L[Resident gets new date/time]
+    J -->|Yes| M[System links matching schedule]
+    M --> N[Approved slot count increments]
+    N --> O[Resident notified]
+    O --> P[Approved appointment appears on worker dashboard]
+    P --> Q[Worker views patient details]
+    Q --> R[Worker assists during checkup day]
+    R --> S[Worker marks appointment completed]
+```
+
+### Ambulance Workflow
+
+```mermaid
+flowchart TD
+    A[Resident logs in] --> B[Open Ambulance Request]
+    B --> C[Enter emergency details]
+    C --> D[Submit request]
+    D --> E[Status = Pending]
+    E --> F[Admin opens Manage Ambulance]
+    F --> G[Admin reviews request]
+    G --> H{Decision}
+    H -->|Approve| I[Resident notified]
+    H -->|Dispatch| J[Worker can coordinate if needed]
+    H -->|Reject| K[Resident notified]
+    J --> L[Request completed after response]
+```
+
+### Role Workflow
+
+```mermaid
+flowchart LR
+    subgraph Resident
+        R1[Register or Login]
+        R2[Book appointment]
+        R3[Request ambulance]
+        R4[Track status]
+    end
+
+    subgraph Admin
+        A1[Create schedules]
+        A2[Approve or reject appointments]
+        A3[Review ambulance requests]
+        A4[Assign staff through schedules]
+    end
+
+    subgraph Worker
+        W1[View approved appointments]
+        W2[View patient details]
+        W3[Follow assigned schedules]
+        W4[Assist residents]
+        W5[Complete appointment]
+    end
+
+    R2 --> A2
+    R3 --> A3
+    A1 --> A2
+    A2 --> W1
+    A4 --> W3
+    W1 --> W2 --> W4 --> W5
+```
+
+### Summary
+
+1. Resident logs in and submits an appointment or ambulance request.
+2. Admin reviews the request and either approves, rejects, or reschedules it.
+3. Approved appointments are linked to schedules and counted against slots.
+4. Approved appointments become visible to the assigned worker.
+5. Worker handles the resident during the actual checkup or related task.
+
 ## Technology Stack
 
 - **Frontend**: React 19, Vite, TypeScript, Tailwind CSS, shadcn/ui, Wouter, TanStack Query

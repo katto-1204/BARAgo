@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import { ThemeProvider } from "next-themes";
 
 import Landing from "@/pages/public/Landing";
+import UserManual from "@/pages/public/UserManual";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
 
@@ -29,6 +30,12 @@ import Reports from "@/pages/admin/Reports";
 import HealthWorkerDashboard from "@/pages/health-worker/HealthWorkerDashboard";
 import WorkerProfile from "@/pages/health-worker/WorkerProfile";
 
+function getRoleHome(role?: string | null) {
+  if (role === "admin") return "/admin";
+  if (role === "health_worker" || role === "worker" || role === "healthworker") return "/health-worker";
+  return "/dashboard";
+}
+
 function ProtectedRoute({ component: Component, allowedRoles }: { component: ComponentType; allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
 
@@ -37,9 +44,7 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: Com
   if (!user) return <Redirect to="/login" />;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === "admin") return <Redirect to="/admin" />;
-    if (user.role === "health_worker") return <Redirect to="/health-worker" />;
-    return <Redirect to="/dashboard" />;
+    return <Redirect to={getRoleHome(user.role)} />;
   }
 
   return <Component />;
@@ -49,15 +54,14 @@ function HomeRedirect() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="flex h-screen items-center justify-center text-muted-foreground">Loading...</div>;
   if (!user) return <Landing />;
-  if (user.role === "admin") return <Redirect to="/admin" />;
-  if (user.role === "health_worker") return <Redirect to="/health-worker" />;
-  return <Redirect to="/dashboard" />;
+  return <Redirect to={getRoleHome(user.role)} />;
 }
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomeRedirect} />
+      <Route path="/user-manual" component={UserManual} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
 

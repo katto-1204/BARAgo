@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useListAppointments, getListAppointmentsQueryKey, useUpdateAppointment } from "@workspace/api-client-react";
+import { useListAppointments, getListAppointmentsQueryKey, getListSchedulesQueryKey, useUpdateAppointment } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,21 @@ type ActionDialog = {
   appointmentId: string;
   patientName: string;
 };
+
+function getActionErrorMessage(error: unknown) {
+  const apiError = error as {
+    data?: { error?: string; message?: string };
+    response?: { data?: { error?: string; message?: string } };
+    message?: string;
+  };
+
+  return apiError.data?.error
+    || apiError.data?.message
+    || apiError.response?.data?.error
+    || apiError.response?.data?.message
+    || apiError.message
+    || "Action failed";
+}
 
 export default function ManageAppointments() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -77,13 +92,14 @@ export default function ManageAppointments() {
     updateMutation.mutate({ id: dialog.appointmentId, data: payload }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListSchedulesQueryKey() });
         toast({ title: `Appointment ${statusMap[dialog.type]}` });
         setDialog(null);
         setRemarks("");
         setReschedDate("");
         setReschedTime("");
       },
-      onError: () => toast({ title: "Action failed", variant: "destructive" }),
+      onError: (error) => toast({ title: "Action failed", description: getActionErrorMessage(error), variant: "destructive" }),
     });
   };
 

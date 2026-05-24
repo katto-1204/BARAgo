@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginUser, useGetCurrentUser, getGetCurrentUserQueryKey } from "@workspace/api-client-react";
 import { useLocation, Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,12 @@ type AuthErrorModal = {
   description: string;
   details?: string;
 };
+
+function getRoleHome(role?: string | null) {
+  if (role === "admin") return "/admin";
+  if (role === "health_worker" || role === "worker" || role === "healthworker") return "/health-worker";
+  return "/dashboard";
+}
 
 function getApiErrorData(error: unknown) {
   return error as {
@@ -96,6 +103,7 @@ function getLoginError(error: unknown): AuthErrorModal {
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const loginMutation = useLoginUser();
   const { refetch } = useGetCurrentUser({ query: { enabled: false, queryKey: getGetCurrentUserQueryKey() } });
   const [showPassword, setShowPassword] = useState(false);
@@ -109,12 +117,13 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      await loginMutation.mutateAsync({ data });
-      const { data: user } = await refetch();
+      const loginResponse = await loginMutation.mutateAsync({ data });
+      const user = loginResponse.user ?? (await refetch()).data;
+      queryClient.setQueryData(getGetCurrentUserQueryKey(), user);
       toast({ title: "Welcome back!" });
-      if (user?.role === "admin") setLocation("/admin");
-      else if (user?.role === "health_worker") setLocation("/health-worker");
-      else setLocation("/dashboard");
+      const route = getRoleHome(user?.role);
+      setLocation(route);
+      window.location.replace(route);
     } catch (err: unknown) {
       const error = getLoginError(err);
       setErrorModal(error);

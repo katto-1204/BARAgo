@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useGetResidentDashboard, getGetResidentDashboardQueryKey, useListAppointments, getListAppointmentsQueryKey } from "@workspace/api-client-react";
+import { useGetResidentDashboard, getGetResidentDashboardQueryKey, useListAppointments, getListAppointmentsQueryKey, useListSchedules, getListSchedulesQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,9 @@ export default function ResidentDashboard() {
 
   const { data: appointmentsList, isLoading: isApptsLoading } = useListAppointments({}, {
     query: { queryKey: getListAppointmentsQueryKey({}) }
+  });
+  const { data: schedules, isLoading: isSchedulesLoading } = useListSchedules({ status: "open" }, {
+    query: { queryKey: getListSchedulesQueryKey({ status: "open" }) }
   });
 
   const [greeting, setGreeting] = useState("Welcome back");
@@ -111,6 +114,10 @@ export default function ResidentDashboard() {
   // Filter appointments for the currently selected date
   const selectedDateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
   const appointmentsForSelectedDate = appointmentsList?.filter(appt => appt.preferredDate === selectedDateStr) || [];
+  const todayStr = new Date().toISOString().split("T")[0];
+  const availableSchedules = (schedules ?? [])
+    .filter((schedule) => schedule.status === "open" && schedule.scheduleDate >= todayStr && schedule.currentSlots < schedule.slotLimit)
+    .slice(0, 4);
 
   return (
     <AppLayout>
@@ -216,6 +223,53 @@ export default function ResidentDashboard() {
               ))}
             </div>
           </div>
+
+          <Card className="border border-border/80 shadow-sm rounded-2xl overflow-hidden bg-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border/60">
+              <CardTitle className="text-sm font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <Clock3 className="h-4 w-4 text-primary" />
+                Available Health Schedules
+              </CardTitle>
+              <Button variant="outline" size="sm" asChild className="rounded-xl h-8 text-xs">
+                <Link href="/appointments/new">Book</Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4">
+              {isSchedulesLoading ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Skeleton className="h-24 rounded-xl" />
+                  <Skeleton className="h-24 rounded-xl" />
+                </div>
+              ) : availableSchedules.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {availableSchedules.map((schedule) => {
+                    const remainingSlots = schedule.slotLimit - schedule.currentSlots;
+                    return (
+                      <Link key={schedule.id} href="/appointments/new" className="rounded-xl border border-border/70 bg-muted/20 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-extrabold text-foreground">{schedule.scheduleDate}</p>
+                            <p className="mt-1 text-xs font-semibold text-primary">{schedule.startTime} - {schedule.endTime}</p>
+                            <p className="mt-2 text-xs text-muted-foreground">Service: Barangay health checkup</p>
+                            <p className="text-xs text-muted-foreground">Staff: {schedule.assignedStaff || "To be assigned"}</p>
+                          </div>
+                          <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">
+                            {remainingSlots} slots
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed bg-muted/30 p-6 text-center">
+                  <CalendarIcon className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+                  <p className="text-sm font-semibold text-foreground">No available health schedules yet.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Please check again later or contact the barangay health office.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Ambulance Request Banner */}
           <Card className="border border-red-500/20 bg-gradient-to-r from-red-500/5 to-rose-500/5 shadow-sm overflow-hidden rounded-2xl">

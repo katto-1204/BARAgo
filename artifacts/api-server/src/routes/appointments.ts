@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, usersTable, residentsTable, appointmentsTable, notificationsTable } from "@workspace/db";
+import { db, usersTable, residentsTable, appointmentsTable, notificationsTable, healthSchedulesTable } from "@workspace/db";
 import { requireAuthMiddleware, requireAdminOrHealthWorker } from "../middlewares/auth";
 import { UpdateAppointmentBody } from "@workspace/api-zod";
 
@@ -17,6 +17,53 @@ async function buildAppointmentWithResident(appointment: typeof appointmentsTabl
     ...appointment,
     resident: resident ? { ...resident.residents, user: resident.users } : null,
   };
+}
+
+async function findScheduleForAppointment(appointment: typeof appointmentsTable.$inferSelect) {
+  if (appointment.scheduleId) {
+    const [schedule] = await db
+      .select()
+      .from(healthSchedulesTable)
+      .where(eq(healthSchedulesTable.id, appointment.scheduleId));
+    return schedule ?? null;
+  }
+
+  if (!appointment.preferredDate) return null;
+
+  const schedules = await db
+    .select()
+    .from(healthSchedulesTable)
+    .where(eq(healthSchedulesTable.scheduleDate, appointment.preferredDate));
+
+  return schedules.find((schedule) => {
+    if (!appointment.preferredTime) return schedule.status === "open";
+    return schedule.status === "open" && appointment.preferredTime.includes(schedule.startTime);
+  }) ?? schedules.find((schedule) => schedule.status === "open") ?? schedules[0] ?? null;
+}
+
+async function syncScheduleSlots(scheduleId: string) {
+  const [schedule] = await db
+    .select()
+    .from(healthSchedulesTable)
+    .where(eq(healthSchedulesTable.id, scheduleId));
+
+  if (!schedule) return null;
+
+  const approvedAppointments = await db
+    .select()
+    .from(appointmentsTable)
+    .where(and(
+      eq(appointmentsTable.status, "approved"),
+      eq(appointmentsTable.scheduleId, schedule.id)
+    ));
+
+  const currentSlots = approvedAppointments.length;
+  await db
+    .update(healthSchedulesTable)
+    .set({ currentSlots })
+    .where(eq(healthSchedulesTable.id, schedule.id));
+
+  return { ...schedule, currentSlots };
 }
 
 router.get("/appointments", requireAuthMiddleware, async (req, res): Promise<void> => {
@@ -60,6 +107,7 @@ router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<vo
   const reason = typeof req.body.reason === "string" ? req.body.reason.trim() : "";
   const preferredDate = typeof req.body.preferredDate === "string" ? req.body.preferredDate : "";
   const preferredTime = typeof req.body.preferredTime === "string" ? req.body.preferredTime : "";
+  const scheduleId = typeof req.body.scheduleId === "string" ? req.body.scheduleId : null;
   const patientAge = typeof req.body.patientAge === "number" && Number.isFinite(req.body.patientAge)
     ? req.body.patientAge
     : null;
@@ -80,8 +128,25 @@ router.post("/appointments", requireAuthMiddleware, async (req, res): Promise<vo
     return;
   }
 
+  if (scheduleId) {
+    const [schedule] = await db.select().from(healthSchedulesTable).where(eq(healthSchedulesTable.id, scheduleId));
+    if (!schedule) {
+      res.status(404).json({ error: "Schedule not found" });
+      return;
+    }
+    if (schedule.status !== "open" || schedule.currentSlots >= schedule.slotLimit) {
+      res.status(400).json({ error: "Selected schedule is no longer available." });
+      return;
+    }
+    if (schedule.scheduleDate !== preferredDate) {
+      res.status(400).json({ error: "Appointment date must match the selected schedule." });
+      return;
+    }
+  }
+
   const [appointment] = await db.insert(appointmentsTable).values({
     residentId,
+    scheduleId,
     patientName,
     patientAge,
     reason,
@@ -121,11 +186,43 @@ router.patch("/appointments/:id", requireAdminOrHealthWorker, async (req, res): 
     return;
   }
 
+  const isApproving = parsed.data.status === "approved" && existing.status !== "approved";
+  const isLeavingApproved = parsed.data.status && parsed.data.status !== "approved" && existing.status === "approved";
+  const scheduleToSyncAfterLeaving = isLeavingApproved ? await findScheduleForAppointment(existing) : null;
+
+  if (isApproving) {
+    const schedule = await findScheduleForAppointment(existing);
+    if (!schedule) {
+      res.status(400).json({ error: "No health schedule exists for this appointment date. Create a matching schedule before approving." });
+      return;
+    }
+
+    const syncedSchedule = await syncScheduleSlots(schedule.id);
+    const currentSlots = syncedSchedule?.currentSlots ?? schedule.currentSlots;
+    if (currentSlots >= schedule.slotLimit) {
+      res.status(400).json({ error: "This schedule is already full." });
+      return;
+    }
+
+    parsed.data.scheduleId = schedule.id;
+  }
+
+  const updateData = { ...parsed.data };
+
   const [updated] = await db
     .update(appointmentsTable)
-    .set(parsed.data)
+    .set(updateData)
     .where(eq(appointmentsTable.id, id))
     .returning();
+
+  if (isApproving) {
+    const schedule = await findScheduleForAppointment(updated);
+    if (schedule) await syncScheduleSlots(schedule.id);
+  }
+
+  if (scheduleToSyncAfterLeaving) {
+    await syncScheduleSlots(scheduleToSyncAfterLeaving.id);
+  }
 
   // Send notification to resident
   const [resident] = await db.select().from(residentsTable).where(eq(residentsTable.id, existing.residentId));

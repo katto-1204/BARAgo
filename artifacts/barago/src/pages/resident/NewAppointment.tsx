@@ -24,6 +24,7 @@ const schema = z.object({
   patientName: z.string().min(1, "Patient name is required"),
   patientAge: z.coerce.number().int().positive().optional(),
   reason: z.string().min(1, "Reason is required"),
+  scheduleId: z.string().min(1, "Please choose an available schedule"),
   preferredDate: z.string().min(1, "Preferred date is required"),
   preferredTime: z.string().min(1, "Preferred time is required"),
   notes: z.string().optional(),
@@ -47,13 +48,14 @@ export default function NewAppointment() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createMutation = useCreateAppointment();
-  const { data: schedules } = useListSchedules({ status: "available" });
+  const { data: schedules, isLoading: isSchedulesLoading, isError: isSchedulesError } = useListSchedules({ status: "open" });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       patientName: "",
       reason: "",
+      scheduleId: "",
       preferredDate: "",
       preferredTime: "",
       notes: "",
@@ -65,9 +67,10 @@ export default function NewAppointment() {
       patientName: values.patientName,
       patientAge: values.patientAge,
       reason: values.reason,
+      scheduleId: values.scheduleId,
       preferredDate: values.preferredDate,
       preferredTime: values.preferredTime,
-    }}, {
+    } as any}, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAppointmentsQueryKey() });
         toast({ title: "Appointment request submitted", description: "The barangay health staff will review your request." });
@@ -79,7 +82,12 @@ export default function NewAppointment() {
     });
   };
 
-  const selectedDate = form.watch("preferredDate");
+  const selectedScheduleId = form.watch("scheduleId");
+  const today = new Date().toISOString().split("T")[0];
+  const availableSchedules = (schedules ?? []).filter((schedule) => {
+    const remainingSlots = schedule.slotLimit - (schedule.currentSlots || 0);
+    return schedule.status === "open" && schedule.scheduleDate >= today && remainingSlots > 0;
+  });
 
   return (
     <AppLayout>
@@ -180,36 +188,59 @@ export default function NewAppointment() {
                 <div className="space-y-3">
                   <Label className="font-semibold text-foreground">Available Schedules</Label>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    {schedules && schedules.length > 0 ? (
-                      schedules.map((s) => {
+                    {isSchedulesLoading ? (
+                      <div className="grid w-full gap-3 sm:grid-cols-2">
+                        <div className="h-28 rounded-2xl bg-muted animate-pulse" />
+                        <div className="h-28 rounded-2xl bg-muted animate-pulse" />
+                      </div>
+                    ) : isSchedulesError ? (
+                      <div className="w-full rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+                        Unable to load health schedules. Please refresh the page or contact the barangay health office.
+                      </div>
+                    ) : availableSchedules.length > 0 ? (
+                      availableSchedules.map((s) => {
                         const date = parseISO(s.scheduleDate);
-                        const isSelected = selectedDate === s.scheduleDate;
+                        const remainingSlots = s.slotLimit - (s.currentSlots || 0);
+                        const isSelected = selectedScheduleId === s.id;
                         return (
                           <button
                             key={s.id}
                             type="button"
                             onClick={() => {
+                              form.setValue("scheduleId", s.id, { shouldValidate: true });
                               form.setValue("preferredDate", s.scheduleDate);
-                              form.setValue("preferredTime", s.startTime);
+                              form.setValue("preferredTime", `${s.startTime} - ${s.endTime}`);
                             }}
                             className={cn(
-                              "flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-2xl border-2 transition-all duration-200 shadow-sm",
+                              "flex-shrink-0 flex w-44 flex-col items-start justify-center rounded-2xl border-2 p-4 text-left transition-all duration-200 shadow-sm",
                               isSelected
                                 ? "border-primary bg-primary/10 text-primary shadow-primary/20 scale-105"
                                 : "border-border/60 bg-card hover:border-primary/50 hover:shadow-sm"
                             )}
                           >
-                            <span className="text-xs font-semibold uppercase text-muted-foreground">{format(date, "EEE")}</span>
-                            <span className="text-2xl font-extrabold text-foreground">{format(date, "dd")}</span>
-                            <span className="text-xs font-medium text-muted-foreground">{format(date, "MMM")}</span>
-                            <span className="text-[10px] mt-0.5 font-bold text-primary">{s.slotLimit - (s.currentSlots || 0)} slots</span>
+                            <span className="text-xs font-semibold uppercase text-muted-foreground">{format(date, "EEE, MMM dd")}</span>
+                            <span className="mt-1 text-sm font-extrabold text-foreground">{s.startTime} - {s.endTime}</span>
+                            <span className="mt-1 text-xs text-muted-foreground">Service: Barangay health checkup</span>
+                            <span className="text-xs text-muted-foreground">Staff: {s.assignedStaff || "To be assigned"}</span>
+                            <span className="mt-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                              {remainingSlots} slots available
+                            </span>
                           </button>
                         );
                       })
                     ) : (
-                      <p className="text-sm text-muted-foreground italic py-3">No available schedules found.</p>
+                      <div className="w-full rounded-xl border border-dashed bg-muted/30 p-5 text-center">
+                        <CalendarIcon className="mx-auto mb-2 h-7 w-7 text-muted-foreground/50" />
+                        <p className="text-sm font-semibold text-foreground">No available health schedules yet.</p>
+                        <p className="text-sm text-muted-foreground">Please check again later or contact the barangay health office.</p>
+                      </div>
                     )}
                   </div>
+                  <FormField control={form.control} name="scheduleId" render={() => (
+                    <FormItem>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -219,7 +250,7 @@ export default function NewAppointment() {
                         <CalendarIcon className="h-4 w-4 text-primary" /> Preferred Date
                       </FormLabel>
                       <FormControl>
-                        <Input type="date" data-testid="input-preferred-date" className="rounded-xl" {...field} />
+                        <Input type="date" data-testid="input-preferred-date" className="rounded-xl bg-muted/40" readOnly {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -230,15 +261,13 @@ export default function NewAppointment() {
                         <Clock className="h-4 w-4 text-primary" /> Preferred Time
                       </FormLabel>
                       <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger data-testid="select-preferred-time" className="rounded-xl">
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="morning">Morning (8AM - 12PM)</SelectItem>
-                            <SelectItem value="afternoon">Afternoon (1PM - 5PM)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          {...field}
+                          data-testid="select-preferred-time"
+                          className="rounded-xl bg-muted/40"
+                          readOnly
+                          placeholder="Choose a schedule first"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

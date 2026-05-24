@@ -1,10 +1,13 @@
 import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { ReactNode } from "react";
-import { Shield, Sun, Moon } from "lucide-react";
+import { BookOpen, Shield, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   const { theme, setTheme } = useTheme();
+  const [location] = useLocation();
+  const showManualButton = location !== "/user-manual";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -41,6 +44,15 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 flex flex-col">
         {children}
       </main>
+      {showManualButton && (
+        <Link
+          href="/user-manual"
+          className="fixed bottom-5 left-5 z-50 inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-card/95 px-4 py-3 text-sm font-bold text-primary shadow-lg shadow-primary/10 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-primary hover:text-primary-foreground"
+        >
+          <BookOpen className="h-4 w-4" />
+          User Manual
+        </Link>
+      )}
       <footer className="bg-gradient-to-r from-primary to-emerald-500 py-8">
         <div className="container mx-auto px-4 flex flex-col items-center text-center text-white gap-3">
           <div className="flex items-center gap-2">

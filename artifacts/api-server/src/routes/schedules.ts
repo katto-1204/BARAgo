@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, gte, lte } from "drizzle-orm";
-import { db, healthSchedulesTable } from "@workspace/db";
+import { db, appointmentsTable, healthSchedulesTable } from "@workspace/db";
 import { requireAuthMiddleware, requireAdminMiddleware } from "../middlewares/auth";
 import { CreateScheduleBody, UpdateScheduleBody } from "@workspace/api-zod";
 
@@ -21,7 +21,32 @@ router.get("/schedules", requireAuthMiddleware, async (req, res): Promise<void> 
   }
 
   const schedules = await query.orderBy(healthSchedulesTable.scheduleDate);
-  res.json(schedules);
+  const schedulesWithApprovedSlots = await Promise.all(schedules.map(async (schedule) => {
+    const approvedAppointments = await db
+      .select()
+      .from(appointmentsTable)
+      .where(and(
+        eq(appointmentsTable.status, "approved"),
+        eq(appointmentsTable.preferredDate, schedule.scheduleDate)
+      ));
+
+    const currentSlots = approvedAppointments.filter((appointment) => {
+      if (appointment.scheduleId) return appointment.scheduleId === schedule.id;
+      if (!appointment.preferredTime) return true;
+      return appointment.preferredTime.includes(schedule.startTime);
+    }).length;
+
+    if (currentSlots !== schedule.currentSlots) {
+      await db
+        .update(healthSchedulesTable)
+        .set({ currentSlots })
+        .where(eq(healthSchedulesTable.id, schedule.id));
+    }
+
+    return { ...schedule, currentSlots };
+  }));
+
+  res.json(schedulesWithApprovedSlots);
 });
 
 router.post("/schedules", requireAdminMiddleware, async (req, res): Promise<void> => {
